@@ -1,0 +1,414 @@
+// src/controllers/internal/TransactionController.js
+
+import TransactionService from "../../services/TransactionService.js";
+import {
+  successResponse,
+  errorResponse,
+  paginatedResponse,
+  createResponse,
+  notFoundResponse,
+  validationErrorResponse,
+} from "../../utils/responseFormatter.js";
+import { ERROR_MESSAGES } from "../../constants/messages.js";
+
+class TransactionController {
+  static async getAllTransactions(req, res) {
+    try {
+      const filters = {
+        search: req.query.search,
+        categoryId: req.query.categoryId,
+        type: req.query.type, // income/expense
+        paymentMode: req.query.paymentMode,
+        dateFrom: req.query.dateFrom,
+        dateTo: req.query.dateTo,
+        amountMin: req.query.amountMin,
+        amountMax: req.query.amountMax,
+        page: req.query.page || 1,
+        limit: req.query.limit || 10,
+        sortBy: req.query.sortBy || "transaction_date",
+        sortOrder: req.query.sortOrder || "DESC",
+      };
+
+      const result = await TransactionService.getAllTransactions(
+        filters,
+        req.user.id
+      );
+
+      if (!result.success) {
+        return errorResponse(res, result.message);
+      }
+
+      return paginatedResponse(
+        res,
+        result.data,
+        result.pagination,
+        result.message
+      );
+    } catch (error) {
+      return errorResponse(res, error.message);
+    }
+  }
+
+  static async getTransactionById(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) {
+        return validationErrorResponse(res, {
+          id: "Valid transaction ID is required",
+        });
+      }
+
+      const result = await TransactionService.getTransactionById(id);
+
+      if (!result.success) {
+        return notFoundResponse(res, result.message);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message);
+    }
+  }
+
+  static async createTransaction(req, res) {
+    try {
+      const {
+        type,
+        category_id,
+        amount,
+        transaction_date,
+        description,
+        payment_mode,
+        cheque_number,
+        receipt_number,
+        transaction_id,
+        payer_name,
+        payer_contact,
+        payer_bank_name,
+        payer_account_number,
+        payer_upi_id,
+        payee_name,
+        payee_contact,
+        payee_bank_name,
+        payee_account_number,
+        payee_upi_id,
+        reference_note,
+      } = req.body;
+
+      // Basic validation
+      const errors = {};
+
+      if (!type || !["income", "expense"].includes(type)) {
+        errors.type = "Valid transaction type (income/expense) is required";
+      }
+
+      if (!category_id || isNaN(category_id)) {
+        errors.category_id = "Valid transaction category is required";
+      }
+
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        errors.amount = "Valid amount greater than 0 is required";
+      }
+
+      if (!transaction_date) {
+        errors.transaction_date = "Transaction date is required";
+      } else {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(transaction_date)) {
+          errors.transaction_date =
+            "Transaction date must be in YYYY-MM-DD format";
+        }
+      }
+
+      if (!payment_mode) {
+        errors.payment_mode = "Payment mode is required";
+      } else {
+        const validPaymentModes = [
+          "cash",
+          "cheque",
+          "upi",
+          "bank_transfer",
+          "card",
+          "online",
+        ];
+        if (!validPaymentModes.includes(payment_mode)) {
+          errors.payment_mode = "Invalid payment mode";
+        }
+      }
+
+      if (payment_mode === "cheque" && !cheque_number) {
+        errors.cheque_number = "Cheque number is required for cheque payments";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        return validationErrorResponse(res, errors);
+      }
+
+      const transactionData = {
+        type,
+        category_id: parseInt(category_id),
+        amount: parseFloat(amount),
+        transaction_date,
+        description: description?.trim(),
+        payment_mode,
+        cheque_number: cheque_number?.trim(),
+        receipt_number: receipt_number?.trim(),
+        transaction_id: transaction_id?.trim(),
+        payer_name: payer_name?.trim(),
+        payer_contact: payer_contact?.trim(),
+        payer_bank_name: payer_bank_name?.trim(),
+        payer_account_number: payer_account_number?.trim(),
+        payer_upi_id: payer_upi_id?.trim(),
+        payee_name: payee_name?.trim(),
+        payee_contact: payee_contact?.trim(),
+        payee_bank_name: payee_bank_name?.trim(),
+        payee_account_number: payee_account_number?.trim(),
+        payee_upi_id: payee_upi_id?.trim(),
+        reference_note: reference_note?.trim(),
+      };
+
+      const result = await TransactionService.createTransaction(
+        transactionData,
+        req.user.id
+      );
+
+      if (!result.success) {
+        return errorResponse(res, result.message);
+      }
+
+      return createResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message);
+    }
+  }
+
+  static async updateTransaction(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = { ...req.body };
+
+      if (!id || isNaN(id)) {
+        return validationErrorResponse(res, {
+          id: "Valid transaction ID is required",
+        });
+      }
+
+      const errors = {};
+
+      if (updateData.type && !["income", "expense"].includes(updateData.type)) {
+        errors.type = "Transaction type must be income or expense";
+      }
+
+      if (updateData.category_id && isNaN(updateData.category_id)) {
+        errors.category_id = "Valid transaction category is required";
+      } else if (updateData.category_id) {
+        updateData.category_id = parseInt(updateData.category_id);
+      }
+
+      if (updateData.amount) {
+        if (isNaN(updateData.amount) || parseFloat(updateData.amount) <= 0) {
+          errors.amount = "Valid amount greater than 0 is required";
+        } else {
+          updateData.amount = parseFloat(updateData.amount);
+        }
+      }
+
+      if (updateData.transaction_date) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(updateData.transaction_date)) {
+          errors.transaction_date =
+            "Transaction date must be in YYYY-MM-DD format";
+        }
+      }
+
+      if (updateData.payment_mode) {
+        const validPaymentModes = [
+          "cash",
+          "cheque",
+          "upi",
+          "bank_transfer",
+          "card",
+          "online",
+        ];
+        if (!validPaymentModes.includes(updateData.payment_mode)) {
+          errors.payment_mode = "Invalid payment mode";
+        }
+      }
+
+      if (Object.keys(errors).length > 0) {
+        return validationErrorResponse(res, errors);
+      }
+
+      // Trim string fields
+      const stringFields = [
+        "description",
+        "cheque_number",
+        "receipt_number",
+        "transaction_id",
+        "payer_name",
+        "payer_contact",
+        "payer_bank_name",
+        "payer_account_number",
+        "payer_upi_id",
+        "payee_name",
+        "payee_contact",
+        "payee_bank_name",
+        "payee_account_number",
+        "payee_upi_id",
+        "reference_note",
+      ];
+
+      stringFields.forEach((field) => {
+        if (updateData[field]) {
+          updateData[field] = updateData[field].trim();
+        }
+      });
+
+      const result = await TransactionService.updateTransaction(
+        id,
+        updateData,
+        req.user.id
+      );
+
+      if (!result.success) {
+        if (result.message === ERROR_MESSAGES.NOT_FOUND) {
+          return notFoundResponse(res, result.message);
+        }
+        return errorResponse(res, result.message);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message);
+    }
+  }
+
+  static async deleteTransaction(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) {
+        return validationErrorResponse(res, {
+          id: "Valid transaction ID is required",
+        });
+      }
+
+      const result = await TransactionService.deleteTransaction(
+        id,
+        req.user.id
+      );
+
+      if (!result.success) {
+        if (result.message === ERROR_MESSAGES.NOT_FOUND) {
+          return notFoundResponse(res, result.message);
+        }
+        return errorResponse(res, result.message);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message);
+    }
+  }
+
+  static async getDashboardStats(req, res) {
+    try {
+      const { dateFrom, dateTo } = req.query;
+      const filters = { dateFrom, dateTo };
+
+      const result = await TransactionService.getDashboardStats(filters);
+
+      if (!result.success) {
+        return errorResponse(res, result.message, 400);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
+  }
+
+  static async getTransactionsByCategory(req, res) {
+    try {
+      const { categoryId } = req.params;
+      const { dateFrom, dateTo, limit } = req.query;
+
+      if (!categoryId || isNaN(categoryId)) {
+        return validationErrorResponse(res, {
+          categoryId: "Valid category ID is required",
+        });
+      }
+
+      const filters = { dateFrom, dateTo, limit: limit || 10 };
+      const result = await TransactionService.getTransactionsByCategory(
+        categoryId,
+        filters
+      );
+
+      if (!result.success) {
+        return errorResponse(res, result.message, 400);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
+  }
+
+  static async getTransactionsByUser(req, res) {
+    try {
+      const { userId } = req.params;
+      const { dateFrom, dateTo, limit } = req.query;
+
+      if (!userId || isNaN(userId)) {
+        return validationErrorResponse(res, {
+          userId: "Valid user ID is required",
+        });
+      }
+
+      const filters = { dateFrom, dateTo, limit: limit || 10 };
+      const result = await TransactionService.getTransactionsByUser(
+        userId,
+        filters
+      );
+
+      if (!result.success) {
+        return errorResponse(res, result.message, 400);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
+  }
+
+  static async getCategoryTransactionTotal(req, res) {
+    try {
+      const { categoryId } = req.params;
+      const { dateFrom, dateTo } = req.query;
+
+      if (!categoryId || isNaN(categoryId)) {
+        return validationErrorResponse(res, {
+          categoryId: "Valid category ID is required",
+        });
+      }
+
+      const filters = { dateFrom, dateTo };
+      const result = await TransactionService.getCategoryTransactionTotal(
+        categoryId,
+        filters
+      );
+
+      if (!result.success) {
+        return errorResponse(res, result.message, 400);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
+  }
+}
+
+export default TransactionController;
