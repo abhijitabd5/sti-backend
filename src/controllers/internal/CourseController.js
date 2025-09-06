@@ -1,3 +1,5 @@
+// src/controllers/internal/CourseController.js
+
 import CourseService from '../../services/CourseService.js';
 import { 
   successResponse, 
@@ -5,14 +7,9 @@ import {
   validationErrorResponse,
   paginatedResponse
 } from '../../utils/responseFormatter.js';
-import { STATUS_CODES } from '../../constants/messages.js';
 
 class CourseController {
-  /**
-   * Get all courses with pagination and filtering
-   * @route GET /courses
-   * @access Private (Admin/Staff)
-   */
+
   static async getAllCourses(req, res) {
     try {
       const {
@@ -40,62 +37,47 @@ class CourseController {
 
       const result = await CourseService.getAllCourses(filters, req.user.id);
 
-      return paginatedResponse(res, result.data, result.pagination, result.message);
+      return paginatedResponse(res, result.data, result.pagination, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.getAllCourses:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Get single course by ID
-   * @route GET /courses/:id
-   * @access Private (Admin/Staff)
-   */
   static async getCourseById(req, res) {
     try {
       const { id } = req.params;
       const result = await CourseService.getCourseById(id, req.user.id);
 
       if (!result.success) {
-        return errorResponse(res, result.message, STATUS_CODES.NOT_FOUND);
+        return errorResponse(res, result.message, 404);
       }
 
-      return successResponse(res, result.data, result.message);
+      return successResponse(res, result.data, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.getCourseById:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Create new course
-   * @route POST /courses
-   * @access Private (Admin/Staff with manage_courses permission)
-   */
   static async createCourse(req, res) {
     try {
       const result = await CourseService.createCourse(req.body, req.user.id);
 
       if (!result.success) {
         if (result.errors) {
-          return validationErrorResponse(res, result.errors, result.message);
+          return validationErrorResponse(res, result.errors, result.message, 400);
         }
-        return errorResponse(res, result.message, STATUS_CODES.BAD_REQUEST);
+        return errorResponse(res, result.message, 400);
       }
 
-      return successResponse(res, result.data, result.message, STATUS_CODES.CREATED);
+      return successResponse(res, result.data, result.message, 201);
     } catch (error) {
       console.error('Error in CourseController.createCourse:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Update course
-   * @route PUT /courses/:id
-   * @access Private (Admin/Staff with manage_courses permission)
-   */
   static async updateCourse(req, res) {
     try {
       const { id } = req.params;
@@ -103,68 +85,53 @@ class CourseController {
 
       if (!result.success) {
         if (result.errors) {
-          return validationErrorResponse(res, result.errors, result.message);
+          return validationErrorResponse(res, result.errors, result.message, 400);
         }
         if (result.message.includes('not found')) {
-          return errorResponse(res, result.message, STATUS_CODES.NOT_FOUND);
+          return errorResponse(res, result.message, 404);
         }
-        return errorResponse(res, result.message, STATUS_CODES.BAD_REQUEST);
+        return errorResponse(res, result.message, 400);
       }
 
-      return successResponse(res, result.data, result.message);
+      return successResponse(res, result.data, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.updateCourse:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Toggle course active status
-   * @route PATCH /courses/:id/toggle-status
-   * @access Private (Admin/Staff with manage_courses permission)
-   */
   static async toggleCourseStatus(req, res) {
     try {
       const { id } = req.params;
       const result = await CourseService.toggleCourseStatus(id, req.user.id);
 
       if (!result.success) {
-        return errorResponse(res, result.message, STATUS_CODES.NOT_FOUND);
+        return errorResponse(res, result.message, 404);
       }
 
-      return successResponse(res, result.data, result.message);
+      return successResponse(res, result.data, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.toggleCourseStatus:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Delete course (soft delete)
-   * @route DELETE /courses/:id
-   * @access Private (Admin/Staff with manage_courses permission)
-   */
   static async deleteCourse(req, res) {
     try {
       const { id } = req.params;
       const result = await CourseService.deleteCourse(id, req.user.id);
 
       if (!result.success) {
-        return errorResponse(res, result.message, STATUS_CODES.NOT_FOUND);
+        return errorResponse(res, result.message, 404);
       }
 
-      return successResponse(res, result.data, result.message);
+      return successResponse(res, result.data, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.deleteCourse:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 
-  /**
-   * Update display order for multiple courses
-   * @route PUT /courses/reorder
-   * @access Private (Admin/Staff with manage_courses permission)
-   */
   static async reorderCourses(req, res) {
     try {
       const { courses } = req.body;
@@ -172,15 +139,15 @@ class CourseController {
 
       if (!result.success) {
         if (result.errors) {
-          return validationErrorResponse(res, result.errors, result.message);
+          return validationErrorResponse(res, result.errors, result.message, 400);
         }
-        return errorResponse(res, result.message, STATUS_CODES.BAD_REQUEST);
+        return errorResponse(res, result.message, 400);
       }
 
-      return successResponse(res, result.data, result.message);
+      return successResponse(res, result.data, result.message, 200);
     } catch (error) {
       console.error('Error in CourseController.reorderCourses:', error);
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 }

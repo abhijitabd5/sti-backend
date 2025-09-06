@@ -9,14 +9,13 @@
 
 ## 📖 Project Introduction
 
-Earth Movers Training Academy Backend is a comprehensive API system designed to manage a training academy for heavy machinery operators. The system handles student enrollment, course management, payments, certificates, expenses, and content management with a robust role-based access control system.
+Earth Movers Training Academy Backend is a comprehensive API system designed to manage a training academy for heavy machinery operators. The system handles student enrollment, course management, certificates, transactions, and content management with a robust role-based access control system.
 
 ### **Core Features:**
 - 🎓 **Course Management** - Create, manage, and display training courses
 - 👥 **Student Management** - Handle student enrollment and tracking
-- 💰 **Payment Processing** - Track payments, generate receipts
 - 📜 **Certificate Generation** - Issue and verify certificates
-- 💼 **Expense Tracking** - Monitor academy expenses
+- 💼 **Transaction Tracking** - Monitor academy expenses/income
 - 🌐 **CMS System** - Manage website content
 - 🔐 **Authentication** - JWT-based auth with role permissions
 - 📊 **Dashboard Analytics** - Business insights and reports
@@ -75,11 +74,9 @@ backend/
 │   │   └── validateRequest.js   # Request validation
 │   │
 │   ├── migrations/          # Database migrations
-│   │   └── [timestamp]-create-[table].js
 │   │
 │   ├── models/              # Sequelize data models
-│   │   ├── user.js          # User model
-│   │   └── [other-models].js
+│   │   └── user.js          # User model
 │   │
 │   ├── repositories/            # Data access layer
 │   │   ├── AuthRepository.js    # Authentication data access
@@ -93,7 +90,6 @@ backend/
 │   │   └── websiteRoutes.js     # Public website routes
 │   │
 │   ├── seeders/             # Database seeders
-│   │   └── [timestamp]-[seeder-name].js
 │   │
 │   ├── services/            # Business logic layer
 │   │   ├── AuthService.js   # Authentication business logic
@@ -251,7 +247,7 @@ class CourseController {
       const result = await CourseService.getAllCourses(filters, req.user.id);
       return paginatedResponse(res, result.data, result.pagination, result.message);
     } catch (error) {
-      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+      return errorResponse(res, error.message, 500);
     }
   }
 }
@@ -636,6 +632,7 @@ CACHE_TTL = {
 - **Controllers:** `PascalCase` classes with `static` methods
 - **Services:** `PascalCase` classes with instance methods  
 - **Repositories:** `PascalCase` classes with instance methods
+- **Models:** `kebab-case`
 - **Functions:** `camelCase`
 - **Constants:** `UPPER_SNAKE_CASE`
 - **Files:** `camelCase.js`

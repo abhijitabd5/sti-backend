@@ -80,9 +80,8 @@ class TransactionController {
         transaction_date,
         description,
         payment_mode,
-        cheque_number,
-        receipt_number,
-        transaction_id,
+        payment_ref_num,
+        payment_ref_type,
         payer_name,
         payer_contact,
         payer_bank_name,
@@ -94,6 +93,9 @@ class TransactionController {
         payee_account_number,
         payee_upi_id,
         reference_note,
+        expense_for_user,
+        attachment_path,
+        attachment_type,
       } = req.body;
 
       // Basic validation
@@ -137,8 +139,16 @@ class TransactionController {
         }
       }
 
-      if (payment_mode === "cheque" && !cheque_number) {
-        errors.cheque_number = "Cheque number is required for cheque payments";
+      if (payment_ref_type && !["receipt", "transaction", "cheque", "invoice", "other"].includes(payment_ref_type)) {
+        errors.payment_ref_type = "Invalid payment reference type";
+      }
+
+      if (attachment_type && !["invoice", "receipt", "proof", "other"].includes(attachment_type)) {
+        errors.attachment_type = "Invalid attachment type";
+      }
+
+      if (expense_for_user && isNaN(expense_for_user)) {
+        errors.expense_for_user = "Valid user ID is required for expense_for_user";
       }
 
       if (Object.keys(errors).length > 0) {
@@ -152,9 +162,8 @@ class TransactionController {
         transaction_date,
         description: description?.trim(),
         payment_mode,
-        cheque_number: cheque_number?.trim(),
-        receipt_number: receipt_number?.trim(),
-        transaction_id: transaction_id?.trim(),
+        payment_ref_num: payment_ref_num?.trim(),
+        payment_ref_type,
         payer_name: payer_name?.trim(),
         payer_contact: payer_contact?.trim(),
         payer_bank_name: payer_bank_name?.trim(),
@@ -166,6 +175,9 @@ class TransactionController {
         payee_account_number: payee_account_number?.trim(),
         payee_upi_id: payee_upi_id?.trim(),
         reference_note: reference_note?.trim(),
+        expense_for_user: expense_for_user ? parseInt(expense_for_user) : null,
+        attachment_path: attachment_path?.trim(),
+        attachment_type: attachment_type || 'invoice',
       };
 
       const result = await TransactionService.createTransaction(
@@ -236,16 +248,26 @@ class TransactionController {
         }
       }
 
+      if (updateData.payment_ref_type && !["receipt", "transaction", "cheque", "invoice", "other"].includes(updateData.payment_ref_type)) {
+        errors.payment_ref_type = "Invalid payment reference type";
+      }
+
+      if (updateData.attachment_type && !["invoice", "receipt", "proof", "other"].includes(updateData.attachment_type)) {
+        errors.attachment_type = "Invalid attachment type";
+      }
+
+      if (updateData.expense_for_user && isNaN(updateData.expense_for_user)) {
+        errors.expense_for_user = "Valid user ID is required for expense_for_user";
+      }
+
       if (Object.keys(errors).length > 0) {
         return validationErrorResponse(res, errors);
       }
 
-      // Trim string fields
+      // Trim string fields and handle type conversions
       const stringFields = [
         "description",
-        "cheque_number",
-        "receipt_number",
-        "transaction_id",
+        "payment_ref_num",
         "payer_name",
         "payer_contact",
         "payer_bank_name",
@@ -257,6 +279,7 @@ class TransactionController {
         "payee_account_number",
         "payee_upi_id",
         "reference_note",
+        "attachment_path",
       ];
 
       stringFields.forEach((field) => {
@@ -264,6 +287,11 @@ class TransactionController {
           updateData[field] = updateData[field].trim();
         }
       });
+
+      // Handle expense_for_user conversion
+      if (updateData.expense_for_user) {
+        updateData.expense_for_user = parseInt(updateData.expense_for_user);
+      }
 
       const result = await TransactionService.updateTransaction(
         id,

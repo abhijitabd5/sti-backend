@@ -22,7 +22,7 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.bulkInsert("students", [
     {
       user_id: saifUserId,
-      student_id: "STI202500001",
+      student_code: "STI202500001",
       name_on_id: "Saiffuddin Sheikh",
       date_of_birth: "2000-01-01",
       gender: "male",
@@ -39,7 +39,7 @@ export async function up(queryInterface, Sequelize) {
     },
     {
       user_id: shubhamUserId,
-      student_id: "STI202500002",
+      student_code: "STI202500002",
       name_on_id: "Shubham Malewar",
       date_of_birth: "2001-05-15",
       gender: "male",
@@ -59,6 +59,6 @@ export async function up(queryInterface, Sequelize) {
 
 export async function down(queryInterface, Sequelize) {
   await queryInterface.bulkDelete("students", {
-    student_id: ["STI202500001", "STI202500002"],
+    student_code: ["STI202500001", "STI202500002"],
   });
 }

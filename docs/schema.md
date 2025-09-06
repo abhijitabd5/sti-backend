@@ -41,21 +41,18 @@
 ## Table list (quick nav)
 1. `users`  
 2. `students`  
-3. `student_documents`  
-4. `courses`  
-5. `student_enrollments`  
-6. `certificates`  
-7. `payments`  
-8. `transaction_categories`  
-9. `transactions`  
-10. `enquiries`  
-11. `pages`  
-12. `page_contents`  
-13. `gallery_photos`  
-14. `gallery_videos`  
-15. `student_reviews`
-
----
+3. `courses`  
+4. `student_enrollments`  
+5. `transaction_categories`  
+6. `transactions`  
+7. `student_payments`  
+8. `student_documents`  
+9. `enquiries`  
+10. `pages`  
+11. `page_contents`  
+12. `gallery_items`  
+13. `reviews`
+14. `certificates`  
 
 ---
 
@@ -70,7 +67,14 @@
 - profile_image (nullable)
 - is_active (boolean, default true)
 - last_login_at (timestamp, nullable)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- created_by
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
+
 > (Students will have a separate table linked to users for student-specific info)
 
 **Associations**
@@ -85,20 +89,29 @@
 
 ## 2) students
 - id (PK)
-- user_id (FK → users.id, unique)
-- student_id (unique, formatted string like STI202500001)
-- name_on_id
-- date_of_birth
-- gender
-- address
-- state
-- city
-- pincode
-- enrollment_date
-- aadhar_number
+- user_id (FK to users.id, unique, not null)
+- student_code (unique, not null)
+- name_on_id (not null)
+- father_name (nullable)
+- mother_name (nullable)
+- date_of_birth (date only, not null)
+- gender (not null)
+- address (text, not null)
+- state (not null)
+- city (not null)
+- pincode (not null)
+- enrollment_date (date only, not null)
+- aadhar_number (not null)
 - pan_number (nullable)
-- login_enabled (boolean)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- login_enabled (boolean, default true)
+- last_login_at (timestamp, nullable)
+- created_by
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
 
 **Associations**
 - `Student.belongsTo(User, { foreignKey: 'user_id', as: 'user' })`
@@ -114,46 +127,42 @@
 
 ---
 
-## 3) student_documents
+## 3) courses
 - id (PK)
-- student_id (FK → students.id)
-- slug (Enum `['aadhaar','pan','ssc','hsc','diploma','graduation','post_grad','school_leaving','birth_certificate','caste_certificate','income_certificate','disability_certificate','photo','signature']` )
-- file_path
-- file_name
-- uploaded_at
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- course_group_id (not null)
+- title (not null)
+- slug (unique, not null)
+- language (enum: en, hi, mar) (default en)
+- summary (text, not null)
+- description (long text, not null)
+- duration (in hours or days, integer, not null)
+- syllabus_text (text, nullable)
+- syllabus_file_path (nullable)
 
-**Associations**
-- `StudentDocument.belongsTo(Student, { foreignKey: 'student_id', as: 'student' })`
+- base_course_fee (decimal, not null)
+- is_discounted (boolean, default true)
+- discount_percentage (decimal, default 0.0)
+- discount_amount (decimal, default 0.0)
+- discounted_course_fee (decimal, not null)
+- hostel_available (boolean, default false)
+- hostel_fee (decimal, default 0.0)
+- mess_available (boolean, default false)
+- mess_fee (decimal, default 0.0)
+- total_fee (decimal, not null)
 
-**Hooks**
-- `beforeCreate` → set `created_by`.
-- `beforeUpdate` → append to `updated_by`.
-- `beforeDestroy` → set `is_deleted` and `deleted_by`.
+- show_offer_badge (boolean, default false)
+- offer_badge_text (nullable)
+- thumbnail (nullable)
+- is_active (boolean, default true)
+- display_order (integer, default 0)
 
----
-
-## 4) courses
-- id (PK)
-- course_group_id
-- title
-- slug (unique, from title)
-- language (enum : 'en','hi','mar')
-- summary (text)
-- description (longtext)
-- duration (integer)
-- syllabus_text (text)
-- syllabus_file_path (file_path for PDF)
-- original_fee
-- is_discounted(boolean)
-- discounted_fee
-- discount_percentage
-- show_offer_badge (boolean)
-- offer_badge_text
-- thumbnail (file_path)
-- is_active(boolean)
-- display_order (int)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- created_by
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
 
 **Associations**
 - `Course.hasMany(StudentEnrollment, { foreignKey: 'course_id', as: 'enrollments' })`
@@ -167,35 +176,51 @@
 
 ---
 
-## 5) student_enrollments
+## 4) student_enrollments
 - id (PK)
-- student_id (FK → students.id)
-- course_id (FK → courses.id)
-- status (enum: not_started, ongoing, completed, aborted)
-- enrollment_date
-- completion_date (nullable)
-- base_course_fee (decimal)
+- student_id (FK to students.id, not null)
+- course_id (FK to courses.id, not null)
+- status (enum: not_started, ongoing, completed, aborted, expelled) (default not_started)
+- enrollment_date (date only, not null)
+- completion_date (date only, nullable)
+
+- base_course_fee (decimal, not null)
 - course_discount_amount (decimal, default 0)
 - course_discount_percentage (decimal, default 0)
+- discounted_course_fee (decimal, not null)
+
 - is_hostel_opted (boolean, default false)
+- hostel_fee (decimal, default 0)
 - is_mess_opted (boolean, default false)
-- hostel_fee (decimal, nullable)
-- mess_fee (decimal)
-- accommodation_discount_amount (decimal, default 0)
-- accommodation_discount_percentage (decimal, default 0)
-- accommodation_total_amount (decimal, default 0)
-- pre_tax_total_fee (decimal, default 0) — *Discounted course fee inclusive of accommodation*
-- extra_discount_amount (decimal, default 0) — *Additional exception discount, applied before tax*
-- taxable_amount (decimal, default 0) — *Discounted course fee exclusive of non-taxable accommodation fees*
-- sgst_percentage (decimal)
-- cgst_percentage (decimal)
+- mess_fee (decimal, default 0)
+
+- pre_tax_total_fee (decimal, default 0)
+
+- extra_discount_amount (decimal, default 0)
+
+- taxable_amount (decimal, default 0)
+- sgst_percentage (decimal, nullable)
+- cgst_percentage (decimal, nullable)
 - sgst_amount (decimal, default 0)
 - cgst_amount (decimal, default 0)
-- total_payable_fee (decimal)
+- igst_applicable(boolean, default false)
+- igst_percentage (decimal, nullable)
+- igst_amount (decimal, default 0)
+- total_tax_amount (decimal, default 0)
+
+- total_payable_fee (decimal, not null)
 - paid_amount (decimal, default 0)
-- due_amount (decimal)
-- remark (text)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- due_amount (decimal, not null)
+
+- remark (text, nullable)
+
+- created_by (nullable)
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by (nullable)
+- createdAt
+- updatedAt
+- deletedAt
 
 **Associations**
 - `StudentEnrollment.belongsTo(Student, { foreignKey: 'student_id', as: 'student' })`
@@ -208,59 +233,21 @@
 
 ---
 
-## 6) certificates
+## 5) transaction_categories
 - id (PK)
-- certificate_number (unique)
-- student_id (FK → students.id)
-- course_id (FK → courses.id)
-- issue_date
-- file_path (soft copy PDF)
-- status (enum: valid, revoked, expired)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- name (unique, not null)
+- slug (unique, not null)
+- type (enum: income, expense, not null)
+- is_active (boolean, default true)
+- display_order (integer, default 0)
 
-**Associations**
-- `Certificate.belongsTo(Student, { foreignKey: 'student_id', as: 'student' })`
-- `Certificate.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })`
-
-**Hooks**
-- `beforeCreate` → set `created_by`.
-- `beforeUpdate` → append to `updated_by`.
-- `beforeDestroy` → set `is_deleted` and `deleted_by`.
-
----
-
-## 7) payments
-- id (PK)
-- student_id (FK → students.id)
-- course_id (FK → courses.id, nullable if general payment)
-- amount
-- discount_amount (if applicable)
-- net_amount
-- payment_date
-- payment_method (cash, bank_transfer, cheque, UPI, etc.)
-- description
-- receipt_number (unique, auto-generated)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
-
-**Associations**
-- `Payment.belongsTo(Student, { foreignKey: 'student_id', as: 'student' })`
-- `Payment.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })`
-
-**Hooks**
-- `beforeCreate` → set `created_by`.
-- `beforeUpdate` → append to `updated_by`.
-- `beforeDestroy` → set `is_deleted` and `deleted_by`.
-
----
-
-## 8) transaction_categories
-- id (PK)
-- name (unique)
-- slug (unique)
-- type ENUM('income','expense')
-- is_active BOOLEAN DEFAULT true
-- display_order INT NULL
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- created_by (nullable)
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by (nullable)
+- createdAt
+- updatedAt
+- deletedAt
 
 **Associations**
 - `TransactionCategory.hasMany(Transaction, { foreignKey: 'category_id', as: 'transactions' })`
@@ -273,51 +260,46 @@
 
 ---
 
-## 9) transactions
-
+## 6) transactions
 - id (PK)
-- type ENUM('income','expense')
+- type (enum: income, expense, not null)
+- category_id (FK to transaction_categories.id)
+- student_id (FK to students.id)
+- expense_for_user (FK to users.id)
+- course_id (FK to courses.id)
+- enrollment_id (FK to student_enrollments.id)
+- amount (decimal, not null)
+- transaction_date (date only, not null)
 
-- category_id (FK → transaction_categories.id)
-- student_id (nullable, FK → students.id)   -- only for student payments
-- expense_for_user (nullable, FK → users.id)
-- course_id (nullable, FK → courses.id)
-- enrollment_id (nullable, FK → student_enrollments.id)
+- payment_mode (enum: cash, cheque, upi, bank_transfer, card, net_banking, payment_gateway, not null)
+- description (text)
 
-- amount DECIMAL
-- transaction_date DATE
-
-- payment_mode ENUM('cash','cheque','upi','bank_transfer','card','online')
-- description TEXT
-
-<!-- Payment identifiers -->
 - payment_ref_num (nullable)
-- payment_ref_type ENUM('receipt', 'transaction', 'cheque', 'invoice', 'other')
+- payment_ref_type (enum: receipt, transaction, cheque, invoice, other, default other)
 
- <!-- Payer (for income, e.g. student) -->
-- payer_name STRING (nullable)
-- payer_contact STRING (nullable)
-- payer_bank_name STRING (nullable)
-- payer_account_number STRING (nullable)
-- payer_upi_id STRING (nullable)
+- payer_name (nullable)
+- payer_contact (nullable)
+- payer_bank_name (nullable)
+- payer_account_number (nullable)
+- payer_upi_id (nullable)
 
- <!-- Payee (for expense, e.g. vendor/staff) -->
-- payee_name STRING (nullable)
-- payee_contact STRING (nullable)
-- payee_bank_name STRING (nullable)
-- payee_account_number STRING (nullable)
-- payee_upi_id STRING (nullable)
+- payee_name (nullable)
+- payee_contact (nullable)
+- payee_bank_name (nullable)
+- payee_account_number (nullable)
+- payee_upi_id (nullable)
 
- <!-- Attachments -->
-- attachment_path STRING NULL,
-- attachment_type ENUM('invoice','receipt','proof','other') DEFAULT 'invoice'
+- attachment_type (enum: invoice, receipt, proof, other, default other)
+- attachment_path (nullable)
+- reference_note (text)
 
-- reference_note TEXT (nullable)
-
-<!-- Audit -->
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
-
----
+- created_by (nullable)
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by (nullable)
+- createdAt
+- updatedAt
+- deletedAt
 
 **Associations**
 - `Transaction.belongsTo(TransactionCategory, { foreignKey: 'category_id', as: 'category' })`
@@ -330,17 +312,64 @@
 
 ---
 
-## 10) enquiries
+## 7) student_payments
 - id (PK)
-- name
-- email (nullable)
-- phone
-- message (text)
-- status (enum: unread, read, action_taken)
-- is_action_taken (boolean)
-- action_type ENUM('call', 'whatsapp', 'email', 'text_message','visit') (nullable)
+- student_id (FK to students.id, not null)
+- course_id (FK to courses.id, not null)
+- enrollment_id (FK to student_enrollments.id, not null)
+- type (enum: course_fee, accommodation_fee, penalty, miscellaneous)
+- amount (decimal, not null)
+- payment_date (date only, not null)
+- payment_method (enum: cash, cheque, upi, bank_transfer, card, net_banking, payment_gateway, not null)
+- previous_due_amount (decimal, nullable)
+- remaining_due_amount (decimal, nullable)
+
+- created_by (nullable)
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by (nullable)
+- createdAt
+- updatedAt
+- deletedAt
+
+---
+
+## 8) student_documents
+- id (PK)
+- student_id (FK to students.id, not null)
+- slug (enum: aadhaar, pan, ssc, hsc, diploma, graduation, post_grad, school_leaving, birth_certificate, caste_certificate, income_certificate, disability_certificate, photo, signature, not null)
+- file_path (string, not null)
+- file_name (string, not null)
+- uploaded_at (timestamp, default now)
+- created_by
+- updated_by (JSON, default [])
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
+
+----
+
+## 9) enquiries
+- id (PK)
+- name (string, not null)
+- email (string, nullable)
+- phone (string, not null)
+- course_id (FK to courses.id, nullable)
+- message (text, not null)
+- status (enum: unread, read, action_taken, default unread)
+- is_action_taken (boolean, default false)
+- action_type (enum: call, whatsapp, email, text_message, visit, nullable)
 - remark (text, nullable)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at, created_at, updated_at
+
+- created_by
+- updated_by (JSON)
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
 
 ---
 
@@ -351,15 +380,23 @@
 
 ---
 
-## 11) pages
+## 10) pages
 - id (PK)
-- page_name
-- slug (unique)
-- language (enum: 'en', 'hi', 'mar')
-- meta_title
-- meta_description
-- meta_keywords
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- name (string, not null)
+- slug (string, unique, not null)
+- language (enum: en, hi, mar, not null)
+- page_title (string, nullable)
+- meta_title (string, nullable)
+- meta_description (string, nullable)
+- meta_keywords (string, nullable)
+
+- created_by
+- updated_by (JSON)
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
 
 ---
 
@@ -373,15 +410,24 @@
 
 ---
 
-## 12) page_contents
+## 11) page_contents
 - id (PK)
-- page_id (FK → pages.id)
-- section_key (string)
-- language (enum: 'en', 'hi', 'mar')
+- page_id (integer, not null)
+- page_name (string, not null)
+- section_key (string, not null)
+- section_name (string, not null)
+- language (enum: en, hi, mar, not null)
 - title (string, nullable)
 - subtitle (string, nullable)
-- content (longtext)
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- content (text, not null)
+
+- created_by
+- updated_by (JSON)
+- is_deleted (boolean, default false)
+- deleted_by
+- createdAt
+- updatedAt
+- deletedAt
 
 ---
 
@@ -395,13 +441,24 @@
 
 ---
 
-## 13) gallery_photos
+## 12) gallery_items
 - id (PK)
-- caption
-- slug
-- image_path
-- display_order
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+- media_type (enum: photo, video, not null)
+- caption (string, nullable)
+- title (string, nullable)
+- slug (string, unique, not null)
+- is_image_remote (boolean, default false)
+- is_video_remote (boolean, default false)
+- image_path (string, nullable)
+- video_url (string, nullable)
+- display_order (integer, not null, default 0)
+- created_by (integer, not null)
+- updated_by (JSON)
+- is_deleted (boolean, default false)
+- deleted_by (integer)
+- createdAt (date, not null)
+- updatedAt (date, not null)
+- deletedAt (date)
 
 ---
 
@@ -411,33 +468,23 @@
 
 ---
 
-## 14) gallery_videos
-- id (PK)
-- title
-- video_url (YouTube/Facebook)
-- thumbnail (optional)
-- slug
-- display_order
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
-
----
-
-**Hooks**
-- `beforeUpdate` → append to `updated_by`.
-- `beforeDestroy` → set `is_deleted` and `deleted_by`.
-
----
-
-## 15) student_reviews
-- id (PK)
-- student_id (FK → students.id, nullable if anonymous)
-- phone (nullable)
-- review_text (text)
-- rating (int 1–5)
-- is_approved (boolean)
-- display_order
-- qr_code_url
-- created_by, updated_by, is_deleted, deleted_by, deleted_at
+## 13) reviews
+- id (PK, auto-increment integer)
+- student_id (integer, references students(id), nullable)
+- phone (string, nullable)
+- review_text (text, not null)
+- rating (integer, not null)
+- is_approved (boolean, default false)
+- is_enrolled_student (boolean, default false)
+- display_order (integer, default 0)
+- qr_code_url (string, not null)
+- created_by (integer, not null)
+- updated_by (JSON)
+- is_deleted (boolean, default false)
+- deleted_by (integer, nullable)
+- createdAt (date, not null)
+- updatedAt (date, not null)
+- deletedAt (date, nullable)
 
 **Associations**
 - `StudentReview.belongsTo(Student, { foreignKey: 'student_id', as: 'student' })`
@@ -447,6 +494,25 @@
 - `beforeDestroy` → set `is_deleted` and `deleted_by`.
 
 ---
+
+## 14) certificates
+- id (PK, auto-increment integer)
+- certificate_number (string, unique, not null)
+- student_id (integer, not null, references students(id))
+- course_id (integer, not null, references courses(id))
+- enrollment_id (integer, not null, references student_enrollments(id))
+- issue_date (date only, not null)
+- file_path (string, not null)
+- hard_copy_delivered (boolean, default false)
+- delivery_address (string, nullable)
+- status (enum: "valid", "revoked", "expired", default "valid")
+- created_by (integer, nullable)
+- updated_by (JSON, default empty array)
+- is_deleted (boolean, default false)
+- deleted_by (integer, nullable)
+- createdAt (datetime, not null)
+- updatedAt (datetime, not null)
+- deletedAt (datetime, nullable)
 
 # End of schema reference
 

@@ -1,4 +1,5 @@
 // src/services/TransactionService.js
+
 import TransactionRepository from '../repositories/TransactionRepository.js';
 import TransactionCategoryRepository from '../repositories/TransactionCategoryRepository.js';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../constants/messages.js';
@@ -43,7 +44,7 @@ class TransactionService {
 
   async createTransaction(data, currentUserId) {
     try {
-      const { category_id, receipt_number, type } = data;
+      const { category_id, type } = data;
 
       // Validate type
       if (!type || !["income", "expense"].includes(type)) {
@@ -64,27 +65,8 @@ class TransactionService {
         };
       }
 
-      // Check if receipt number is unique (if provided)
-      if (receipt_number) {
-        const receiptExists = await TransactionRepository.getReceiptNumberExists(receipt_number);
-        if (receiptExists) {
-          return {
-            success: false,
-            message: ERROR_MESSAGES.DUPLICATE_RECEIPT,
-            data: null
-          };
-        }
-      }
-
-      // Generate receipt number if not provided
-      let finalReceiptNumber = receipt_number;
-      if (!finalReceiptNumber) {
-        finalReceiptNumber = await this.generateReceiptNumber();
-      }
-
       const transactionData = {
         ...data,
-        receipt_number: finalReceiptNumber,
         created_by: currentUserId
       };
 
@@ -130,18 +112,6 @@ class TransactionService {
           return {
             success: false,
             message: ERROR_MESSAGES.INVALID_CATEGORY,
-            data: null
-          };
-        }
-      }
-
-      // Check receipt number uniqueness if being updated
-      if (data.receipt_number) {
-        const receiptExists = await TransactionRepository.getReceiptNumberExists(data.receipt_number, id);
-        if (receiptExists) {
-          return {
-            success: false,
-            message: ERROR_MESSAGES.DUPLICATE_RECEIPT,
             data: null
           };
         }
@@ -266,26 +236,6 @@ class TransactionService {
     } catch (error) {
       throw new Error(`Failed to calculate category transaction total: ${error.message}`);
     }
-  }
-
-  // Helper method to generate receipt numbers
-  async generateReceiptNumber() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    const datePrefix = `TRX${year}${month}${day}`;
-    
-    let counter = 1;
-    let receiptNumber = `${datePrefix}${String(counter).padStart(4, '0')}`;
-    
-    while (await TransactionRepository.getReceiptNumberExists(receiptNumber)) {
-      counter++;
-      receiptNumber = `${datePrefix}${String(counter).padStart(4, '0')}`;
-    }
-    
-    return receiptNumber;
   }
 }
 

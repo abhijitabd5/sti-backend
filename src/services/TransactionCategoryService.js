@@ -72,6 +72,7 @@ class TransactionCategoryService {
 
   async createCategory(data, currentUserId) {
     try {
+            console.log('AXA')
       const { name } = data;
 
       // Check if name already exists
@@ -86,7 +87,7 @@ class TransactionCategoryService {
       }
 
       // Generate unique slug
-      const baseSlug = generateSlug(name);
+      const baseSlug = await generateSlug(name);
       let slug = baseSlug;
       let counter = 1;
 
@@ -157,7 +158,7 @@ class TransactionCategoryService {
       // Generate new slug if name is being updated
       let updateData = { ...data };
       if (data.name && data.name !== existingCategory.name) {
-        const baseSlug = generateSlug(data.name);
+        const baseSlug = await generateSlug(data.name);
         let slug = baseSlug;
         let counter = 1;
 

@@ -22,6 +22,10 @@ export default (sequelize) => {
         as: "enrollment",
       });
       Transaction.belongsTo(models.User, {
+        foreignKey: "created_by",
+        as: "creator",
+      });
+      Transaction.belongsTo(models.User, {
         foreignKey: "expense_for_user",
         as: "expenseForUser",
       });
@@ -44,7 +48,8 @@ export default (sequelize) => {
           "upi",
           "bank_transfer",
           "card",
-          "online"
+          "net_banking",
+          "payment_gateway"
         ),
         allowNull: false,
       },

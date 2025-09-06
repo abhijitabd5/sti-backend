@@ -146,7 +146,13 @@ class CourseRepository {
         is_active: true,
         language,
       },
-      attributes: ["original_fee", "duration", "is_discounted"],
+      attributes: [
+        "base_course_fee",
+        "discounted_course_fee",
+        "total_fee",
+        "duration",
+        "is_discounted",
+      ],
       raw: true,
     });
 
@@ -157,8 +163,8 @@ class CourseRepository {
     let discountedCourses = 0;
 
     if (totalCourses > 0) {
-      const fees = courses.map((c) => parseFloat(c.original_fee));
-      const durations = courses.map((c) => parseInt(c.duration));
+      const fees = courses.map((c) => parseFloat(c.base_course_fee));
+      const durations = courses.map((d) => parseInt(d.duration));
 
       minFee = Math.min(...fees);
       maxFee = Math.max(...fees);

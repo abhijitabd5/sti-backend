@@ -55,15 +55,13 @@
 4. `courses` - Training course catalog
 5. `student_enrollments` - Course enrollment tracking
 6. `certificates` - Certificate management
-7. `payments` - Payment processing
-8. `expense_categories` - Expense classification
-9. `expenses` - Academy expense tracking
-10. `enquiries` - Lead management
-11. `pages` - CMS page management
-12. `page_contents` - Multi-language content
-13. `gallery_photos` - Image gallery
-14. `gallery_videos` - Video gallery
-15. `student_reviews` - Student testimonials
+7. `transaction_categories` - Transaction classification
+8. `transactions` - Academy expense tracking
+9. `enquiries` - Lead management
+10. `pages` - CMS page management
+11. `page_contents` - Multi-language content
+12. `gallery_items` - Photo and Video Paths
+13. `student_reviews` - Student testimonials
 
 ---
 
@@ -170,37 +168,7 @@ router.use('/public', websiteRoutes);    // /api/public/*
 
 ---
 
-## 📚 Phase 5: Course Management System (✅ COMPLETED)
-
-### **✅ Course CRUD Operations**
-- [x] **Create Course** - Full validation and slug generation
-- [x] **Read Courses** - Pagination, search, filtering
-- [x] **Update Course** - Partial updates with audit trail
-- [x] **Delete Course** - Soft delete with user tracking
-- [x] **Toggle Status** - Activate/deactivate courses
-- [x] **Reorder Courses** - Display order management
-
-### **✅ Public Course Display**
-- [x] **Public Listing** - Active courses only
-- [x] **Course Details** - SEO-friendly slug-based access
-- [x] **Featured Courses** - Courses with offer badges
-- [x] **Course Statistics** - Aggregated course data
-
-### **✅ Course Features**
-- [x] Multi-language support (English, Hindi, Marathi)
-- [x] Pricing with discount system
-- [x] Offer badge management
-- [x] Thumbnail and syllabus file support
-- [x] Duration tracking
-- [x] Display order management
-
-**Course Endpoints:**
-- **Internal:** `/api/internal/courses/*` (admin/seo access)
-- **Public:** `/api/public/courses/*` (no authentication)
-
----
-
-## 🔧 Phase 6: Utilities & Infrastructure (✅ COMPLETED)
+## 🔧 Phase 5: Utilities & Infrastructure (✅ COMPLETED)
 
 ### **✅ Response Standardization**
 - [x] **`responseFormatter.js`** - Consistent API responses
@@ -237,12 +205,12 @@ router.use('/public', websiteRoutes);    // /api/public/*
 3. **Role-based Access Control** - Complete permission system
 4. **Database Layer** - All models, migrations, and relationships
 5. **API Response System** - Standardized response format
+4. **Transaction Management** - Academy expense tracking
 
 ### **⏳ Pending Modules:**
 1. **Student Management** - Enrollment, document upload, tracking
 2. **Payment Processing** - Payment recording, receipt generation
 3. **Certificate System** - Certificate generation and verification
-4. **Expense Management** - Academy expense tracking
 5. **CMS System** - Website content management
 6. **Gallery Management** - Photo/video gallery
 7. **Enquiry System** - Lead management
@@ -250,6 +218,7 @@ router.use('/public', websiteRoutes);    // /api/public/*
 
 ### **🔄 Ready for Frontend Integration:**
 - All course APIs are functional
+- All transaction APIs are functional
 - Authentication system is complete
 - Response format is standardized
 - CORS and security headers configured
@@ -258,17 +227,13 @@ router.use('/public', websiteRoutes);    // /api/public/*
 
 ## 🎯 Next Development Priorities
 
-### **Phase 7: Student Management (Next)**
+### **Phase 7: Enquiry Management (Next)**
+
+### **Phase 8: Student Management**
 1. Student enrollment system
 2. Document upload and verification
 3. Student portal dashboard
 4. Academic progress tracking
-
-### **Phase 8: Payment System**
-1. Payment recording and tracking
-2. Receipt generation
-3. Due amount calculations
-4. Payment method management
 
 ### **Phase 9: Certificate System**
 1. Automated certificate generation

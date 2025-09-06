@@ -6,6 +6,8 @@ export default (sequelize) => {
   class User extends Model {
     static associate(models) {
       User.hasOne(models.Student, { foreignKey: "user_id", as: "student" });
+      User.hasMany(models.Transaction, { foreignKey: "created_by", as: "creator" });
+      User.hasMany(models.Transaction, { foreignKey: "expense_for_user", as: "expenseForUser" });
     }
   }
 

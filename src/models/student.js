@@ -20,7 +20,7 @@ export default (sequelize) => {
         allowNull: false,
         unique: true,
       },
-      student_id: {
+      student_code: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
@@ -29,6 +29,14 @@ export default (sequelize) => {
       name_on_id: {
         type: DataTypes.STRING,
         allowNull: false,
+      },
+      father_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      mother_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       date_of_birth: {
         type: DataTypes.DATEONLY,
@@ -69,6 +77,10 @@ export default (sequelize) => {
       login_enabled: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+      },
+      last_login_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       created_by: {
         type: DataTypes.INTEGER,

@@ -30,8 +30,7 @@ class TransactionRepository {
         { description: { [Op.like]: `%${search}%` } },
         { payee_name: { [Op.like]: `%${search}%` } },
         { reference_note: { [Op.like]: `%${search}%` } },
-        { receipt_number: { [Op.like]: `%${search}%` } },
-        { transaction_id: { [Op.like]: `%${search}%` } }
+        { payment_ref_num: { [Op.like]: `%${search}%` } }
       ];
     }
 
@@ -92,6 +91,12 @@ class TransactionRepository {
           model: User,
           as: 'creator',
           attributes: ['id', 'first_name', 'last_name', 'role']
+        },
+        {
+          model: User,
+          as: 'expenseForUser',
+          attributes: ['id', 'first_name', 'last_name', 'role'],
+          required: false
         }
       ]
     });
@@ -121,6 +126,12 @@ class TransactionRepository {
           model: User,
           as: 'creator',
           attributes: ['id', 'first_name', 'last_name', 'role', 'mobile']
+        },
+        {
+          model: User,
+          as: 'expenseForUser',
+          attributes: ['id', 'first_name', 'last_name', 'role'],
+          required: false
         }
       ]
     });
@@ -173,6 +184,12 @@ class TransactionRepository {
           model: User,
           as: 'creator',
           attributes: ['id', 'first_name', 'last_name']
+        },
+        {
+          model: User,
+          as: 'expenseForUser',
+          attributes: ['id', 'first_name', 'last_name'],
+          required: false
         }
       ]
     });
@@ -203,34 +220,34 @@ class TransactionRepository {
     const transactionsByCategory = await Transaction.findAll({
       attributes: [
         [col('category.name'), 'categoryName'],
-        [fn('SUM', col('amount')), 'totalAmount'],
-        [fn('COUNT', col('id')), 'transactionCount']
+        [fn('SUM', col('Transaction.amount')), 'totalAmount'],
+        [fn('COUNT', col('Transaction.id')), 'transactionCount']
       ],
       where: whereClause,
       include: [{ model: TransactionCategory, as: 'category', attributes: [] }],
       group: ['category_id'],
-      order: [[fn('SUM', col('amount')), 'DESC']]
+      order: [[fn('SUM', col('Transaction.amount')), 'DESC']]
     });
 
     // By payment mode
     const transactionsByPaymentMode = await Transaction.findAll({
       attributes: [
         'payment_mode',
-        [fn('SUM', col('amount')), 'totalAmount'],
-        [fn('COUNT', col('id')), 'transactionCount']
+        [fn('SUM', col('Transaction.amount')), 'totalAmount'],
+        [fn('COUNT', col('Transaction.id')), 'transactionCount']
       ],
       where: whereClause,
       group: ['payment_mode'],
-      order: [[fn('SUM', col('amount')), 'DESC']]
+      order: [[fn('SUM', col('Transaction.amount')), 'DESC']]
     });
 
     // Monthly (last 12 months)
     const monthlyTransactions = await Transaction.findAll({
       attributes: [
-        [fn('YEAR', col('transaction_date')), 'year'],
-        [fn('MONTH', col('transaction_date')), 'month'],
-        [fn('SUM', col('amount')), 'totalAmount'],
-        [fn('COUNT', col('id')), 'transactionCount']
+        [fn('YEAR', col('Transaction.transaction_date')), 'year'],
+        [fn('MONTH', col('Transaction.transaction_date')), 'month'],
+        [fn('SUM', col('Transaction.amount')), 'totalAmount'],
+        [fn('COUNT', col('Transaction.id')), 'transactionCount']
       ],
       where: {
         ...whereClause,
@@ -238,8 +255,8 @@ class TransactionRepository {
           [Op.gte]: literal('DATE_SUB(NOW(), INTERVAL 12 MONTH)')
         }
       },
-      group: [fn('YEAR', col('transaction_date')), fn('MONTH', col('transaction_date'))],
-      order: [[fn('YEAR', col('transaction_date')), 'DESC'], [fn('MONTH', col('transaction_date')), 'DESC']]
+      group: [fn('YEAR', col('Transaction.transaction_date')), fn('MONTH', col('Transaction.transaction_date'))],
+      order: [[fn('YEAR', col('Transaction.transaction_date')), 'DESC'], [fn('MONTH', col('Transaction.transaction_date')), 'DESC']]
     });
 
     return {
@@ -251,16 +268,6 @@ class TransactionRepository {
       transactionsByPaymentMode,
       monthlyTransactions
     };
-  }
-
-  async getReceiptNumberExists(receiptNumber, excludeId = null) {
-    const whereClause = { receipt_number: receiptNumber };
-    if (excludeId) {
-      whereClause.id = { [Op.ne]: excludeId };
-    }
-
-    const existing = await Transaction.findOne({ where: whereClause });
-    return !!existing;
   }
 
   async getTransactionsByUser(userId, filters = {}) {

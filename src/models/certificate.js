@@ -13,6 +13,10 @@ export default (sequelize) => {
         foreignKey: "course_id",
         as: "course",
       });
+      Certificate.belongsTo(models.StudentEnrollment, {
+        foreignKey: "enrollment_id",
+        as: "enrollment",
+      });
     }
   }
 
@@ -24,9 +28,13 @@ export default (sequelize) => {
         allowNull: false,
       },
       student_id: { type: DataTypes.INTEGER, allowNull: false },
+      student_code: {type: DataTypes.STRING, allowNull: false},
       course_id: { type: DataTypes.INTEGER, allowNull: false },
+      enrollment_id: { type: DataTypes.INTEGER, allowNull: false },
       issue_date: { type: DataTypes.DATEONLY, allowNull: false },
       file_path: { type: DataTypes.STRING, allowNull: false },
+      hard_copy_delivered: { type: DataTypes.BOOLEAN, defaultValue: false },
+      delivery_address: { type: DataTypes.STRING, allowNull: true },
       status: {
         type: DataTypes.ENUM("valid", "revoked", "expired"),
         defaultValue: "valid",

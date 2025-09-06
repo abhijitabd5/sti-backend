@@ -3,9 +3,10 @@
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable("pages", {
     id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-    page_name: { type: Sequelize.STRING, allowNull: false },
+    name: { type: Sequelize.STRING, allowNull: false },
     slug: { type: Sequelize.STRING, unique: true, allowNull: false },
     language: { type: Sequelize.ENUM("en", "hi", "mar"), allowNull: false },
+    page_title: { type: Sequelize.STRING },
     meta_title: { type: Sequelize.STRING },
     meta_description: { type: Sequelize.STRING },
     meta_keywords: { type: Sequelize.STRING },

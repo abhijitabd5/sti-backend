@@ -5,7 +5,9 @@ export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable("page_contents", {
     id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
     page_id: { type: Sequelize.INTEGER, allowNull: false },
+    page_name: { type: Sequelize.STRING, allowNull: false },
     section_key: { type: Sequelize.STRING, allowNull: false },
+    section_name: { type: Sequelize.STRING, allowNull: false },
     language: { type: Sequelize.ENUM("en", "hi", "mar"), allowNull: false },
     title: { type: Sequelize.STRING },
     subtitle: { type: Sequelize.STRING },

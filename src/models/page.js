@@ -11,9 +11,10 @@ export default (sequelize) => {
 
   Page.init(
     {
-      page_name: { type: DataTypes.STRING, allowNull: false },
+      name: { type: DataTypes.STRING, allowNull: false },
       slug: { type: DataTypes.STRING, unique: true, allowNull: false },
       language: { type: DataTypes.ENUM("en", "hi", "mar"), allowNull: false },
+      page_title: { type: DataTypes.STRING },
       meta_title: { type: DataTypes.STRING },
       meta_description: { type: DataTypes.STRING },
       meta_keywords: { type: DataTypes.STRING },

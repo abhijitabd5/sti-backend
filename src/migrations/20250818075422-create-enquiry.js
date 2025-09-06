@@ -1,12 +1,16 @@
 // src/migrations/20250818075422-create-enquiry.js
 
-
 export async function up(queryInterface, Sequelize) {
   await queryInterface.createTable("enquiries", {
     id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: Sequelize.STRING, allowNull: false },
     email: { type: Sequelize.STRING },
     phone: { type: Sequelize.STRING, allowNull: false },
+    course_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: { model: "courses", key: "id" },
+    },
     message: { type: Sequelize.TEXT, allowNull: false },
     status: {
       type: Sequelize.ENUM("unread", "read", "action_taken"),
@@ -14,7 +18,13 @@ export async function up(queryInterface, Sequelize) {
     },
     is_action_taken: { type: Sequelize.BOOLEAN, defaultValue: false },
     action_type: {
-      type: Sequelize.ENUM("call", "whatsapp", "email", "text_message", "visit"),
+      type: Sequelize.ENUM(
+        "call",
+        "whatsapp",
+        "email",
+        "text_message",
+        "visit"
+      ),
       allowNull: true,
     },
     remark: { type: Sequelize.TEXT },
