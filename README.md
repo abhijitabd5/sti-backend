@@ -121,7 +121,7 @@ backend/
 │   ├── invoices/
 │   ├── students/           # Student files stored in dedicated folder
 │   |        ├── 1/
-|   |        └── [user-id]/ 
+|   |        └── [student-id]/
 │   └── profiles/            # User profile images
 │
 ├── .env                     # Environment variables

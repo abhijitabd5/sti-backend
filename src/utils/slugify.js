@@ -1,5 +1,6 @@
 import slugifyPackage from 'slugify';
 import { Op } from 'sequelize';
+import path from 'path';
 
 export const slugify = (text, options = {}) => {
   const defaultOptions = {
@@ -40,13 +41,13 @@ export const createUniqueSlug = async (text, model, field = 'slug', id = null) =
   return finalSlug;
 };
 
-export const generateStudentId = (name, enrollmentYear) => {
-  const year = enrollmentYear.toString().slice(-2);
-  const nameSlug = slugify(name.substring(0, 3));
-  const timestamp = Date.now().toString().slice(-4);
-  
-  return `EMA${year}${nameSlug.toUpperCase()}${timestamp}`;
-};
+export const generateStudentDocName = (studentId, originalFilename) => {
+  const extension = path.extname(originalFilename);
+  const nameWithoutExt = path.basename(originalFilename, extension);
+  const cleanName = nameWithoutExt.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const timestamp = Date.now();
+  return `${studentId}-${cleanName}-${timestamp}${extension}`;
+}
 
 export const generateCertificateNumber = (studentId, courseCode) => {
   const year = new Date().getFullYear().toString().slice(-2);
@@ -59,6 +60,6 @@ export const generateCertificateNumber = (studentId, courseCode) => {
 export default {
   slugify,
   createUniqueSlug,
-  generateStudentId,
+  generateStudentDocName,
   generateCertificateNumber
 };

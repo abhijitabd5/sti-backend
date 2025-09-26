@@ -10,6 +10,10 @@ export default (sequelize) => {
         foreignKey: "student_id",
         as: "documents",
       });
+      Student.hasMany(models.StudentEnrollment, {
+        foreignKey: "student_id",
+        as: "enrollments",
+      });
     }
   }
 

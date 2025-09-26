@@ -28,6 +28,7 @@ export async function up(queryInterface, Sequelize) {
     },
     file_path: { type: Sequelize.STRING, allowNull: false },
     file_name: { type: Sequelize.STRING, allowNull: false },
+    is_verified: { type: Sequelize.BOOLEAN, defaultValue: false },
     uploaded_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
     created_by: { type: Sequelize.INTEGER },
     updated_by: { type: Sequelize.JSON, defaultValue: [] },
