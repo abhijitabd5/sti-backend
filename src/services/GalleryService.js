@@ -13,19 +13,20 @@ class GalleryService {
   async createGalleryItem(data, files, currentUserId) {
     try {
       // Generate unique slug
-      if (!data.slug && data.title) {
-        data.slug = await this.generateUniqueSlug(data.title);
+      if (data.title) {
+        data.slug = await this.generateUniqueSlug(data.title.trim());
       } else if (!data.slug) {
         throw new Error('Title is required to generate slug');
       }
 
-      // Validate required fields
-      if (!data.media_type || !['photo', 'video'].includes(data.media_type)) {
+      if (!data.media_type || !['photo', 'video'].includes(data.media_type.trim())) {
+        console.log("Inside if condition and Media type is ",data.media_type);
         throw new Error('Media type must be either "photo" or "video"');
       }
 
       // Handle main media file upload or remote URL
-      if (files.file && !data.is_media_remote) {
+      console.log(files.file, "Remote check ",data.is_media_remote.trim()=="false");
+      if (files.file && data.is_media_remote.trim()=="false") {
         const fileInfo = await this.processFileUpload(files.file[0], data.media_type);
         data.media_path = fileInfo.path;
       } else if (data.is_media_remote && !data.media_path) {
@@ -39,9 +40,9 @@ class GalleryService {
         if (files.thumbnail && !data.is_thumbnail_remote) {
           const thumbnailInfo = await this.processFileUpload(files.thumbnail[0], 'photo');
           data.thumbnail_path = thumbnailInfo.path;
-        } else if (data.is_thumbnail_remote && !data.thumbnail_path) {
+        } else if (data.is_thumbnail_remote.trim()=="true" && !data.thumbnail_path) {
           throw new Error('Remote thumbnail URL is required when is_thumbnail_remote is true for videos');
-        } else if (!files.thumbnail && !data.is_thumbnail_remote) {
+        } else if (!files.thumbnail && data.is_thumbnail_remote.trim()=="false") {
           throw new Error('Thumbnail is required for videos - either upload a file or provide a remote thumbnail URL');
         }
       }
@@ -224,7 +225,7 @@ class GalleryService {
             media_type: 'photo', // Assuming bulk upload is for photos only
             caption: data.caption || '',
             title: data.title ? `${data.title} ${i + 1}` : `Gallery Item ${i + 1}`,
-            page_slug: data.page_slug || '',
+            page_slug: data.page_slug || 'image_gallery',
             display_order: (data.display_order || 0) + i,
             is_media_remote: false,
             is_thumbnail_remote: false
@@ -315,18 +316,20 @@ class GalleryService {
     }
   }
 
-  // Helper methods
-  async generateUniqueSlug(title, excludeId = null) {
-    let slug = generateSlug(title);
-    let counter = 1;
-    
-    while (await GalleryRepository.checkSlugExists(slug, excludeId)) {
-      slug = `${generateSlug(title)}-${counter}`;
-      counter++;
-    }
-    
-    return slug;
-  }
+
+async generateUniqueSlug(title, excludeId = null) {
+  // Sanitize the title
+  let sanitizedTitle = title
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+
+  const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+
+  let slug = `${sanitizedTitle}-${timestamp}`;
+  return slug;
+}
+
 
   async processFileUpload(file, mediaType) {
     const uploadDir = mediaType === 'photo' ? 'uploads/gallery/images' : 'uploads/gallery/videos';

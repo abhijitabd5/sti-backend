@@ -81,46 +81,46 @@ class StudentRepository {
     return await Course.findByPk(courseId);
   }
 
-async findStudentEnrollments(filters) {
-  const { search, status, course } = filters;
+  async findStudentEnrollments(filters) {
+    const { search, status, course } = filters;
 
-  const whereConditions = {};
-  
-  if (status) whereConditions.status = status;
-  if (course) whereConditions.course_id = course;
+    const whereConditions = {};
 
-  const includeConditions = [
-    {
-      model: Student,
-      as: "student",
-      include: [
-        {
-          model: User,
-          as: "user",
-          where: search
-            ? {
-                [Op.or]: [
-                  { first_name: { [Op.like]: `%${search}%` } },
-                  { last_name: { [Op.like]: `%${search}%` } },
-                  { mobile: { [Op.like]: `%${search}%` } },
-                ],
-              }
-            : undefined,
-        },
-      ],
-    },
-    {
-      model: Course,
-      as: "course",
-    },
-  ];
+    if (status) whereConditions.status = status;
+    if (course) whereConditions.course_id = course;
 
-  return await StudentEnrollment.findAndCountAll({
-    where: whereConditions,
-    include: includeConditions,
-    order: [["enrollment_date", "DESC"]], // Sort by enrollment_date instead
-  });
-}
+    const includeConditions = [
+      {
+        model: Student,
+        as: "student",
+        include: [
+          {
+            model: User,
+            as: "user",
+            where: search
+              ? {
+                  [Op.or]: [
+                    { first_name: { [Op.like]: `%${search}%` } },
+                    { last_name: { [Op.like]: `%${search}%` } },
+                    { mobile: { [Op.like]: `%${search}%` } },
+                  ],
+                }
+              : undefined,
+          },
+        ],
+      },
+      {
+        model: Course,
+        as: "course",
+      },
+    ];
+
+    return await StudentEnrollment.findAndCountAll({
+      where: whereConditions,
+      include: includeConditions,
+      order: [["enrollment_date", "DESC"]], // Sort by enrollment_date instead
+    });
+  }
 
   // async findStudentEnrollments(filters) {
   //   const { search, status, course } = filters;
@@ -237,12 +237,43 @@ async findStudentEnrollments(filters) {
     });
   }
 
-  async getStudentPaymentHistory(studentId, enrollmentId) {
-    return await StudentPayment.findAll({
+  async validateStudentEnrollment(studentId, enrollmentId) {
+    const enrollment = await StudentEnrollment.findOne({
       where: {
+        id: enrollmentId,
         student_id: studentId,
-        enrollment_id: enrollmentId,
       },
+    });
+
+    return enrollment !== null;
+  }
+
+  async getStudentPaymentHistory(studentId, enrollmentId = null) {
+    const whereConditions = {
+      student_id: studentId,
+    };
+
+    // Only add enrollment_id filter if provided
+    if (enrollmentId) {
+      whereConditions.enrollment_id = enrollmentId;
+    }
+
+    return await StudentPayment.findAll({
+      where: whereConditions,
+      include: [
+        {
+          model: StudentEnrollment,
+          as: "enrollment",
+          include: [
+            {
+              model: Course,
+              as: "course",
+              attributes: ["id", "title"],
+            },
+          ],
+          attributes: ["id", "status"],
+        },
+      ],
       order: [["payment_date", "DESC"]],
     });
   }

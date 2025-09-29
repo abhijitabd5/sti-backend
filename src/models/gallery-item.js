@@ -13,15 +13,16 @@ export default (sequelize) => {
       caption: { type: DataTypes.STRING, allowNull: true },
       title: { type: DataTypes.STRING, allowNull: true },
       slug: { type: DataTypes.STRING, allowNull: false, unique: true },
-      is_image_remote: { type: DataTypes.BOOLEAN, defaultValue: false },
-      is_video_remote: { type: DataTypes.BOOLEAN, defaultValue: false },
-      image_path: { type: DataTypes.STRING, allowNull: true }, // photo or thumbnail
-      video_url: { type: DataTypes.STRING, allowNull: true }, // video only
+      is_media_remote: { type: DataTypes.BOOLEAN, defaultValue: false },
+      media_path: { type: DataTypes.STRING, allowNull: true },
+      is_thumbnail_remote: { type: DataTypes.BOOLEAN, defaultValue: false },
+      thumbnail_path: { type: DataTypes.STRING, allowNull: true },
       display_order: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
       },
+      is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
       created_by: { type: DataTypes.INTEGER, allowNull: false },
       updated_by: { type: DataTypes.JSON, allowNull: true },
       is_deleted: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -34,6 +35,9 @@ export default (sequelize) => {
       paranoid: true,
       timestamps: true,
       hooks: {
+        beforeCreate: (record, options) => {
+          if (options.currentUserId) record.created_by = options.currentUserId;
+        },
         beforeUpdate: (record, options) => {
           if (!record.updated_by) record.updated_by = [];
           record.updated_by.push({

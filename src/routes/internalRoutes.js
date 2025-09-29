@@ -7,13 +7,10 @@ import TransactionController from "../controllers/internal/TransactionController
 import EnquiryController from "../controllers/internal/enquiryController.js";
 import WebsiteEnquiryController from "../controllers/website/webEnquiryController.js";
 import StudentController from "../controllers/internal/StudentController.js";
-import slugify from "../utils/slugify.js";
-import { generateStudentDocName } from "../utils/slugify.js";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import PageController from "../controllers/internal/PageController.js";
+import PageContentController from "../controllers/internal/PageContentController.js";
+import GalleryController from "../controllers/internal/GalleryController.js";
+import {uploadConfigs} from "../config/uploadConfig.js";
 
 const router = express.Router();
 
@@ -80,7 +77,7 @@ router.patch("/enquiry/bulk-status", EnquiryController.bulkUpdateStatus);
 router.use("/student", checkRoles("super_admin", "admin"));
 
 router.post("/student/check-aadhar", StudentController.checkAadharExists);
-router.post("studentt/enroll", StudentController.createEnrollment);
+router.post("/student/enroll", StudentController.createEnrollment);
 router.get("/student/students", StudentController.getStudentsList);
 router.get("/student/students/:studentId", StudentController.getStudentDetails);
 router.put("/student/enrollments/:enrollmentId", StudentController.updateEnrollment);
@@ -89,78 +86,74 @@ router.delete("/student/documents/:documentId", StudentController.deleteDocument
 router.get("/student/courses", StudentController.getCoursesList);
 
 
-router.get("/student/:studentId/:enrollmentId/payments", StudentController.getPaymentHistory);
+router.get("/student/:studentId/payments", StudentController.getPaymentHistory);
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    try {
-      const studentId = req.params.studentId;
-      const uploadPath = path.join(process.cwd(), "uploads", "students", studentId);
-      fs.mkdirSync(uploadPath, { recursive: true });
-      cb(null, uploadPath);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: function (req, file, cb) {
-    try {
-      const studentId = req.params.studentId;
-      const fileName = generateStudentDocName(studentId, file.originalname);
-      cb(null, fileName);
-    } catch (error) {
-      cb(error);
-    }
-  },
-});
-
-// Configure multer
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
-    files: 10, // Maximum 10 files
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/jpg",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(`Invalid file type: ${file.mimetype}. Only JPEG, PNG, PDF, DOC, and DOCX files are allowed.`),
-        false
-      );
-    }
-  },
-});
-
-// Routes
 router.post(
-  "/enrollment/students/:studentId/documents",
-  upload.array("documents", 10),
+  "/student/:studentId/documents",
+  uploadConfigs.studentDocuments().array("documents", 10),
   StudentController.uploadDocuments
 );
 
 // Gallery CRUD Routes
 
-// Apply role-based access control for all routes
-router.use(checkRoles("super_admin", "admin", "seo"));
+router.use("/gallery",checkRoles("super_admin", "admin", "seo"));
 
-// router.post('/', upload.single('file'), GalleryController.createGalleryItem);
-// router.get('/', GalleryController.getAllGalleryItems);
-// router.get('/stats', GalleryController.getGalleryStats);
-// router.get('/:id', GalleryController.getGalleryItemById);
-// router.put('/:id', upload.single('file'), GalleryController.updateGalleryItem);
-// router.delete('/:id', GalleryController.deleteGalleryItem);
-// router.patch('/:id/status', GalleryController.updateGalleryItemStatus);
-// router.post('/bulk', upload.array('files', 20), GalleryController.bulkUploadGalleryItems);
-// router.patch('/reorder', GalleryController.reorderGalleryItems);
+// Updated gallery routes using uploadConfigs
+
+const galleryUpload = uploadConfigs.galleryMedia.fields([
+  { name: 'file', maxCount: 1 },        // Main media file
+  { name: 'thumbnail', maxCount: 1 }    // Thumbnail for videos
+]);
+
+// Alternative: If you want to accept any field name dynamically
+// const galleryUpload = uploadConfigs.galleryMedia.any();
+
+router.post('/gallery', 
+  galleryUpload,  // This is the key - specify expected fields
+  GalleryController.createGalleryItem
+);
+
+// router.post('/gallery/', uploadConfigs.galleryMedia.single('file'), GalleryController.createGalleryItem);
+router.post('/gallery/bulk', uploadConfigs.galleryMedia.array('files', 20), GalleryController.bulkUploadGalleryItems);
+router.put('/gallery/:id', uploadConfigs.galleryMedia.single('file'), GalleryController.updateGalleryItem);
+
+router.get('/gallery/', GalleryController.getAllGalleryItems);
+router.get('/gallery/stats', GalleryController.getGalleryStats);
+router.get('/gallery/:id', GalleryController.getGalleryItemById);
+router.delete('/gallery/:id', GalleryController.deleteGalleryItem);
+router.patch('/gallery/:id/status', GalleryController.updateGalleryItemStatus);
+router.patch('/gallery/reorder', GalleryController.reorderGalleryItems);
+
+router.use("/pages",checkRoles("super_admin", "admin", "seo"));
+
+router.get("/pages", PageController.getAllPages);
+router.post("/pages", PageController.createPage);
+router.get("/pages/statistics", PageController.getPageStatistics);
+router.get("/pages/language/:language", PageController.getPagesByLanguage);
+router.get("/pages/slug/:slug", PageController.getPageBySlug);
+router.get("/pages/:id", PageController.getPageById);
+router.put("/pages/:id", PageController.updatePage);
+router.delete("/pages/:id", PageController.deletePage);
+router.post("/pages/:id/duplicate", PageController.duplicatePage);
+
+router.use("/page-contents",checkRoles("super_admin", "admin", "seo"));
+
+router.get("/page-contents", PageContentController.getAllContents);
+router.post("/page-contents", PageContentController.createContent);
+router.post("/page-contents/bulk", PageContentController.bulkCreateContents);
+router.put("/page-contents/reorder", PageContentController.reorderContents);
+router.get("/page-contents/statistics", PageContentController.getContentStatistics);
+
+// Routes by Page ID
+router.get("/page-contents/page/:pageId", PageContentController.getContentsByPage);
+router.delete("/page-contents/page/:pageId", PageContentController.deleteContentsByPage);
+router.get("/page-contents/page/:pageId/sections", PageContentController.getSectionKeys);
+router.get("/page-contents/page/:pageId/section/:sectionKey", PageContentController.getContentsBySection);
+
+// Routes by Content ID
+router.get("/page-contents/:id", PageContentController.getContentById);
+router.put("/page-contents/:id", PageContentController.updateContent);
+router.delete("/page-contents/:id", PageContentController.deleteContent);
+router.post("/page-contents/:id/duplicate", PageContentController.duplicateContent);
 
 export default router;

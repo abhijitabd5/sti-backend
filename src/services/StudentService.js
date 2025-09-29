@@ -556,7 +556,6 @@ class StudentService {
 
   async uploadDocuments(studentId, fileSlugMapping, files, currentUserId, additionalData = {}) {
     try {
-
       const studentExists = await StudentRepository.findStudentById(studentId);
       if (!studentExists) {
         throw new Error(`Student with ID ${studentId} not found`);
@@ -704,12 +703,25 @@ class StudentService {
     };
   }
 
-  async getPaymentHistory(studentId, enrollmentId) {
+  async getPaymentHistory(studentId, enrollmentId = null) {
+    // If enrollmentId is provided, validate it belongs to the student
+    if (enrollmentId) {
+      const isValidEnrollment = await StudentRepository.validateStudentEnrollment(studentId, enrollmentId);
+
+      if (!isValidEnrollment) {
+        throw new Error("Enrollment not found or does not belong to this student");
+      }
+    }
+
     const payments = await StudentRepository.getStudentPaymentHistory(studentId, enrollmentId);
+
+    const message = enrollmentId
+      ? "Payment history for enrollment retrieved successfully"
+      : "Payment history for student retrieved successfully";
 
     return {
       success: true,
-      message: "Payment history retrieved successfully",
+      message,
       data: payments,
     };
   }
