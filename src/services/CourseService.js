@@ -124,21 +124,32 @@ class CourseService {
   /**
    * Create new course
    */
+  async deleteOldFile(filePath) {
+    if (!filePath) return;
+
+    try {
+      const fullPath = path.join(process.cwd(), filePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log(`Deleted old file: ${filePath}`);
+      }
+    } catch (error) {
+      console.error(`Error deleting file ${filePath}:`, error);
+    }
+  }
+
+  /**
+   * Create new course
+   */
   async createCourse(courseData, currentUserId) {
     try {
       // Validate required fields
-      const requiredFields = [
-        "title",
-        "summary",
-        "description",
-        "duration",
-        "base_course_fee",
-      ];
+      const requiredFields = ["title", "summary", "description", "duration", "base_course_fee"];
       const missingFields = {};
 
       requiredFields.forEach((field) => {
         if (!courseData[field]) {
-          missingFields[field] = `${field.replace("_", " ")} is required`;
+          missingFields[field] = `${field.replace(/_/g, " ")} is required`;
         }
       });
 
@@ -162,44 +173,35 @@ class CourseService {
 
       // Calculate discount & totals
       const baseFee = parseFloat(courseData.base_course_fee);
-      const discountAmount = courseData.is_discounted
-        ? parseFloat(courseData.discount_amount || 0)
-        : 0;
+      const discountAmount = courseData.is_discounted ? parseFloat(courseData.discount_amount || 0) : 0;
       const discountedCourseFee = baseFee - discountAmount;
 
-      const hostelFee = courseData.hostel_available
-        ? parseFloat(courseData.hostel_fee || 0)
-        : 0;
-      const messFee = courseData.mess_available
-        ? parseFloat(courseData.mess_fee || 0)
-        : 0;
+      const hostelFee = courseData.hostel_available ? parseFloat(courseData.hostel_fee || 0) : 0;
+      const messFee = courseData.mess_available ? parseFloat(courseData.mess_fee || 0) : 0;
 
       const totalFee = discountedCourseFee + hostelFee + messFee;
 
-      // Prepare course data
+      // Prepare course data with file path
       const processedData = {
         ...courseData,
         slug,
         duration: parseInt(courseData.duration),
         base_course_fee: baseFee,
         discount_amount: discountAmount,
-        discount_percentage: courseData.is_discounted
-          ? parseFloat(courseData.discount_percentage || 0)
-          : 0,
+        discount_percentage: courseData.is_discounted ? parseFloat(courseData.discount_percentage || 0) : 0,
         discounted_course_fee: discountedCourseFee,
         hostel_fee: hostelFee,
         mess_fee: messFee,
         total_fee: totalFee,
-        offer_badge_text: courseData.show_offer_badge
-          ? courseData.offer_badge_text
-          : null,
+        course_group_id:500,
+        offer_badge_text: courseData.show_offer_badge ? courseData.offer_badge_text : null,
         display_order: parseInt(courseData.display_order || 0),
+        // Store relative path for thumbnail
+        thumbnail: courseData.thumbnail ? courseData.thumbnail.replace(/\\/g, "/") : null,
+        syllabus_file_path: courseData.syllabus_file_path ? courseData.syllabus_file_path.replace(/\\/g, "/") : null,
       };
 
-      const course = await CourseRepository.create(
-        processedData,
-        currentUserId
-      );
+      const course = await CourseRepository.create(processedData, currentUserId);
 
       return {
         success: true,
@@ -234,6 +236,19 @@ class CourseService {
       }
 
       const processedData = { ...updateData };
+
+      // Handle thumbnail update
+      if (updateData.thumbnail) {
+        // Use relative path if file uploaded
+        processedData.thumbnail = req.file
+          ? `/uploads/courses/thumbnails/${req.file.filename}`
+          : updateData.thumbnail.replace(/\\/g, "/");
+
+        // Delete old thumbnail if exists and is different
+        if (course.thumbnail && course.thumbnail !== processedData.thumbnail) {
+          await this.deleteOldFile(course.thumbnail);
+        }
+      }
 
       // Generate new slug if title changed
       if (updateData.title && updateData.title !== course.title) {
@@ -294,11 +309,7 @@ class CourseService {
         processedData.offer_badge_text = null;
       }
 
-      const updatedCourse = await CourseRepository.update(
-        id,
-        processedData,
-        currentUserId
-      );
+      const updatedCourse = await CourseRepository.update(id, processedData, currentUserId);
 
       return {
         success: true,
@@ -333,17 +344,11 @@ class CourseService {
       }
 
       const newStatus = !course.is_active;
-      await CourseRepository.update(
-        id,
-        { is_active: newStatus },
-        currentUserId
-      );
+      await CourseRepository.update(id, { is_active: newStatus }, currentUserId);
 
       return {
         success: true,
-        message: newStatus
-          ? "Course activated successfully"
-          : "Course deactivated successfully",
+        message: newStatus ? "Course activated successfully" : "Course deactivated successfully",
         data: { id, is_active: newStatus },
       };
     } catch (error) {
@@ -390,9 +395,7 @@ class CourseService {
       const coursesWithEffectiveFee = courses.map((course) => {
         const courseData = course.toJSON();
         courseData.effective_fee =
-          course.is_discounted && course.discounted_fee
-            ? course.discounted_fee
-            : course.original_fee;
+          course.is_discounted && course.discounted_fee ? course.discounted_fee : course.original_fee;
         return courseData;
       });
 
@@ -428,28 +431,34 @@ class CourseService {
   /**
    * Reorder courses
    */
-  async reorderCourses(coursesData, currentUserId) {
-    try {
-      if (!Array.isArray(coursesData)) {
-        return {
-          success: false,
-          message: ERROR_MESSAGES.VALIDATION_ERROR,
-          errors: { courses: "Courses array is required" },
-        };
-      }
-
-      await CourseRepository.updateDisplayOrders(coursesData, currentUserId);
-
-      return {
-        success: true,
-        message: "Course order updated successfully",
-        data: null,
-      };
-    } catch (error) {
-      console.error("Error in CourseService.reorderCourses:", error);
-      throw new Error(ERROR_MESSAGES.DATABASE_ERROR);
-    }
+async reorderCourses(coursesData, currentUserId) {
+  if (!Array.isArray(coursesData) || coursesData.length === 0) {
+    return {
+      success: false,
+      message: ERROR_MESSAGES.VALIDATION_ERROR,
+      errors: { courses: "Courses array is required" },
+    };
   }
+
+  try {
+    console.log("Reached in service")
+    await CourseRepository.updateDisplayOrders(coursesData, { currentUserId });
+
+    return {
+      success: true,
+      message: "Course order updated successfully",
+      data: null,
+    };
+  } catch (error) {
+    console.error("Error in CourseService.reorderCourses:", error.message);
+    return {
+      success: false,
+      message: error.message,
+      errors: null,
+    };
+  }
+}
+
 }
 
 export default new CourseService();

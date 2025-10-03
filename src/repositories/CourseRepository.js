@@ -186,19 +186,21 @@ class CourseRepository {
   /**
    * Update display order for multiple courses
    */
-  async updateDisplayOrders(coursesData, currentUserId) {
-    const updatePromises = coursesData.map(({ id, display_order }) =>
-      Course.update(
-        { display_order: parseInt(display_order) },
-        {
-          where: { id },
-          currentUserId,
-        }
-      )
-    );
+async updateDisplayOrders(coursesData, options = {}) {
+  console.log("Reached in repository")
+  const updates = coursesData.map(course =>
+    Course.update(
+      { display_order: parseInt(course.display_order) },
+      {
+        where: { id: course.id, is_deleted: false },
+        ...options,
+      }
+    )
+  );
 
-    return await Promise.all(updatePromises);
-  }
+  return await Promise.all(updates);
+}
+
 
   /**
    * Check if slug exists (for uniqueness validation)

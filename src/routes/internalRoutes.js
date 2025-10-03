@@ -10,7 +10,7 @@ import StudentController from "../controllers/internal/StudentController.js";
 import PageController from "../controllers/internal/PageController.js";
 import PageContentController from "../controllers/internal/PageContentController.js";
 import GalleryController from "../controllers/internal/GalleryController.js";
-import {uploadConfigs} from "../config/uploadConfig.js";
+import { uploadConfigs } from "../config/uploadConfig.js";
 
 const router = express.Router();
 
@@ -21,12 +21,23 @@ router.use(authenticate);
 router.use("/courses", checkRoles("super_admin", "admin", "seo"));
 
 router.get("/courses", CourseController.getAllCourses);
-router.get("/courses/:id", CourseController.getCourseById);
-router.post("/courses", CourseController.createCourse);
+router.get("/courses/view/:id", CourseController.getCourseById);
+
+router.post(
+  "/courses/create",
+  uploadConfigs.courseFiles,
+  CourseController.createCourse
+);
+
+router.put(
+  "/courses/update/:id",
+  uploadConfigs.courseFiles,
+  CourseController.updateCourse
+);
+
 router.put("/courses/reorder", CourseController.reorderCourses);
-router.put("/courses/:id", CourseController.updateCourse);
-router.patch("/courses/:id/toggle-status", CourseController.toggleCourseStatus);
-router.delete("/courses/:id", CourseController.deleteCourse);
+router.patch("/courses/toggle-status/:id", CourseController.toggleCourseStatus);
+router.delete("/courses/delete/:id", CourseController.deleteCourse);
 
 // Transaction Category routes
 router.use("/transaction-categories", checkRoles("super_admin", "admin"));
@@ -85,7 +96,6 @@ router.patch("/student/students/:studentId/toggle-login", StudentController.togg
 router.delete("/student/documents/:documentId", StudentController.deleteDocument);
 router.get("/student/courses", StudentController.getCoursesList);
 
-
 router.get("/student/:studentId/payments", StudentController.getPaymentHistory);
 
 router.post(
@@ -96,35 +106,36 @@ router.post(
 
 // Gallery CRUD Routes
 
-router.use("/gallery",checkRoles("super_admin", "admin", "seo"));
+router.use("/gallery", checkRoles("super_admin", "admin", "seo"));
 
 // Updated gallery routes using uploadConfigs
 
 const galleryUpload = uploadConfigs.galleryMedia.fields([
-  { name: 'file', maxCount: 1 },        // Main media file
-  { name: 'thumbnail', maxCount: 1 }    // Thumbnail for videos
+  { name: "file", maxCount: 1 }, // Main media file
+  { name: "thumbnail", maxCount: 1 }, // Thumbnail for videos
 ]);
 
 // Alternative: If you want to accept any field name dynamically
 // const galleryUpload = uploadConfigs.galleryMedia.any();
 
-router.post('/gallery', 
-  galleryUpload,  // This is the key - specify expected fields
+router.post(
+  "/gallery",
+  galleryUpload, // This is the key - specify expected fields
   GalleryController.createGalleryItem
 );
 
 // router.post('/gallery/', uploadConfigs.galleryMedia.single('file'), GalleryController.createGalleryItem);
-router.post('/gallery/bulk', uploadConfigs.galleryMedia.array('files', 20), GalleryController.bulkUploadGalleryItems);
-router.put('/gallery/:id', uploadConfigs.galleryMedia.single('file'), GalleryController.updateGalleryItem);
+router.post("/gallery/bulk", uploadConfigs.galleryMedia.array("files", 20), GalleryController.bulkUploadGalleryItems);
+router.put("/gallery/:id", uploadConfigs.galleryMedia.single("file"), GalleryController.updateGalleryItem);
 
-router.get('/gallery/', GalleryController.getAllGalleryItems);
-router.get('/gallery/stats', GalleryController.getGalleryStats);
-router.get('/gallery/:id', GalleryController.getGalleryItemById);
-router.delete('/gallery/:id', GalleryController.deleteGalleryItem);
-router.patch('/gallery/:id/status', GalleryController.updateGalleryItemStatus);
-router.patch('/gallery/reorder', GalleryController.reorderGalleryItems);
+router.get("/gallery/", GalleryController.getAllGalleryItems);
+router.get("/gallery/stats", GalleryController.getGalleryStats);
+router.get("/gallery/:id", GalleryController.getGalleryItemById);
+router.delete("/gallery/:id", GalleryController.deleteGalleryItem);
+router.patch("/gallery/:id/status", GalleryController.updateGalleryItemStatus);
+router.patch("/gallery/reorder", GalleryController.reorderGalleryItems);
 
-router.use("/pages",checkRoles("super_admin", "admin", "seo"));
+router.use("/pages", checkRoles("super_admin", "admin", "seo"));
 
 router.get("/pages", PageController.getAllPages);
 router.post("/pages", PageController.createPage);
@@ -136,7 +147,7 @@ router.put("/pages/:id", PageController.updatePage);
 router.delete("/pages/:id", PageController.deletePage);
 router.post("/pages/:id/duplicate", PageController.duplicatePage);
 
-router.use("/page-contents",checkRoles("super_admin", "admin", "seo"));
+router.use("/page-contents", checkRoles("super_admin", "admin", "seo"));
 
 router.get("/page-contents", PageContentController.getAllContents);
 router.post("/page-contents", PageContentController.createContent);

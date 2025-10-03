@@ -17,8 +17,7 @@ const FILE_TYPES = {
     "image/jpeg", "image/png", "image/jpg", "image/webp",
     "video/mp4", "video/avi", "video/mov", "video/wmv"
   ],
-  // New combined type for student documents
-  student_files: [
+  images_and_documents: [
     "image/jpeg", "image/png", "image/jpg", "image/webp",
     "application/pdf",
     "application/msword",
@@ -29,7 +28,6 @@ const FILE_TYPES = {
 // Generic upload configuration factory
 export const createUploadConfig = (options = {}) => {
   const {
-    uploadType = "generic",
     destinationPath,
     allowedFileTypes = "images",
     maxFileSize = 10 * 1024 * 1024, // 10MB default
@@ -80,10 +78,18 @@ export const createUploadConfig = (options = {}) => {
     },
   });
 
-  // Get allowed mime types - FIXED to properly handle arrays
-  const getAllowedTypes = () => {
+  // Get allowed mime types
+  const getAllowedTypes = (file) => {
+    // Support dynamic file type based on file
+    if (typeof allowedFileTypes === "function") {
+      const dynamicType = allowedFileTypes(file);
+      if (Array.isArray(dynamicType)) {
+        return dynamicType.flat();
+      }
+      return FILE_TYPES[dynamicType] || FILE_TYPES.images;
+    }
+    
     if (Array.isArray(allowedFileTypes)) {
-      // Flatten nested arrays if present
       return allowedFileTypes.flat();
     }
     return FILE_TYPES[allowedFileTypes] || FILE_TYPES.images;
@@ -91,7 +97,7 @@ export const createUploadConfig = (options = {}) => {
 
   // File filter function
   const fileFilter = (req, file, cb) => {
-    const allowedTypes = getAllowedTypes();
+    const allowedTypes = getAllowedTypes(file);
 
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
@@ -121,13 +127,12 @@ export const createUploadConfig = (options = {}) => {
 
 // Predefined upload configurations
 export const uploadConfigs = {
-  // Student documents upload - FIXED
+  // Student documents upload
   studentDocuments: (studentId) =>
     createUploadConfig({
-      uploadType: "student-documents",
       destinationPath: (req) => 
         `uploads/students/${req.params.studentId || req.params.id || studentId}`,
-      allowedFileTypes: "student_files", // Use the predefined type
+      allowedFileTypes: "images_and_documents",
       maxFileSize: 50 * 1024 * 1024, // 50MB
       maxFiles: 10,
       customFilename: (req, file) => {
@@ -138,7 +143,6 @@ export const uploadConfigs = {
 
   // Profile photos upload
   profilePhotos: createUploadConfig({
-    uploadType: "profile-photos",
     destinationPath: "uploads/profiles",
     allowedFileTypes: "images",
     maxFileSize: 5 * 1024 * 1024, // 5MB
@@ -149,11 +153,9 @@ export const uploadConfigs = {
 
   // Gallery media upload
   galleryMedia: createUploadConfig({
-    uploadType: "gallery-media",
     destinationPath: (req) => {
-      const category = req.body.category || "general";
       const mediaType = req.body.media_type || "images";
-      return `uploads/gallery/${mediaType}/${category}`;
+      return `uploads/gallery/${mediaType}`;
     },
     allowedFileTypes: "all_media",
     maxFileSize: 100 * 1024 * 1024, // 100MB
@@ -164,7 +166,6 @@ export const uploadConfigs = {
 
   // Course thumbnails upload
   courseThumbnails: createUploadConfig({
-    uploadType: "course-thumbnails",
     destinationPath: "uploads/courses/thumbnails",
     allowedFileTypes: "images",
     maxFileSize: 10 * 1024 * 1024, // 10MB
@@ -173,9 +174,18 @@ export const uploadConfigs = {
       generateFileName("course", file.originalname),
   }),
 
+  // Course syllabus upload
+  courseSyllabus: createUploadConfig({
+    destinationPath: "uploads/courses/syllabus",
+    allowedFileTypes: "documents",
+    maxFileSize: 20 * 1024 * 1024, // 20MB
+    maxFiles: 1,
+    customFilename: (req, file) => 
+      generateFileName("syllabus", file.originalname),
+  }),
+
   // Certificate uploads
   certificates: createUploadConfig({
-    uploadType: "certificates",
     destinationPath: "uploads/certificates",
     allowedFileTypes: "documents",
     maxFileSize: 20 * 1024 * 1024, // 20MB
@@ -186,9 +196,8 @@ export const uploadConfigs = {
 
   // Receipt uploads
   receipts: createUploadConfig({
-    uploadType: "receipts",
     destinationPath: "uploads/receipts",
-    allowedFileTypes: [...FILE_TYPES.images, ...FILE_TYPES.documents],
+    allowedFileTypes: "images_and_documents",
     maxFileSize: 10 * 1024 * 1024, // 10MB
     maxFiles: 1,
     customFilename: (req, file) => 
@@ -197,7 +206,6 @@ export const uploadConfigs = {
 
   // Invoice uploads
   invoices: createUploadConfig({
-    uploadType: "invoices",
     destinationPath: "uploads/invoices",
     allowedFileTypes: "documents",
     maxFileSize: 10 * 1024 * 1024, // 10MB
@@ -205,6 +213,35 @@ export const uploadConfigs = {
     customFilename: (req, file) => 
       generateFileName("invoice", file.originalname),
   }),
+
+  // Course files (thumbnail + syllabus)
+  courseFiles: createUploadConfig({
+    destinationPath: (req, file) => {
+      if (file.fieldname === "thumbnail") {
+        return "uploads/courses/thumbnails";
+      } else if (file.fieldname === "syllabus") {
+        return "uploads/courses/syllabus";
+      }
+      return "uploads/courses";
+    },
+    allowedFileTypes: (file) => {
+      if (file.fieldname === "thumbnail") {
+        return "images";
+      } else if (file.fieldname === "syllabus") {
+        return "documents";
+      }
+      return "images";
+    },
+    maxFileSize: 20 * 1024 * 1024, // 20MB
+    maxFiles: 2,
+    customFilename: (req, file) => {
+      const prefix = file.fieldname === "thumbnail" ? "course" : "syllabus";
+      return generateFileName(prefix, file.originalname);
+    },
+  }).fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "syllabus", maxCount: 1 }
+  ]),
 };
 
 // Export the factory function and predefined configs
