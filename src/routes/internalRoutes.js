@@ -37,6 +37,7 @@ router.put(
 
 router.put("/courses/reorder", CourseController.reorderCourses);
 router.patch("/courses/toggle-status/:id", CourseController.toggleCourseStatus);
+router.get('/courses/variants/:course_group_id', CourseController.getCourseVariantsByGroupId);
 router.delete("/courses/delete/:id", CourseController.deleteCourse);
 
 // Transaction Category routes

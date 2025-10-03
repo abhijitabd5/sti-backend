@@ -61,6 +61,22 @@ class CourseController {
     }
   }
 
+  static async getCourseVariantsByGroupId(req, res) {
+  try {
+    const { course_group_id } = req.params;
+    const result = await CourseService.getCourseVariantsByGroupId(course_group_id);
+
+    if (!result.success) {
+      return errorResponse(res, result.message, 404);
+    }
+
+    return successResponse(res, result.data, result.message, 200);
+  } catch (error) {
+    console.error("Error in CourseController.getCourseVariantsByGroupId:", error);
+    return errorResponse(res, error.message, 500);
+  }
+}
+
   static async createCourse(req, res) {
     try {
       // Extract form data

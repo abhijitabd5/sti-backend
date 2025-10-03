@@ -121,6 +121,34 @@ class CourseService {
     }
   }
 
+  async getCourseVariantsByGroupId(course_group_id) {
+    try {
+      const courses = await CourseRepository.findByCourseGroupId(course_group_id);
+
+      if (!courses || courses.length === 0) {
+        return {
+          success: false,
+          message: ERROR_MESSAGES.COURSE_NOT_FOUND,
+        };
+      }
+
+      // Transform array to object with language keys
+      const coursesByLanguage = courses.reduce((acc, course) => {
+        acc[course.language] = course;
+        return acc;
+      }, {});
+
+      return {
+        success: true,
+        message: SUCCESS_MESSAGES.DATA_RETRIEVED,
+        data: coursesByLanguage,
+      };
+    } catch (error) {
+      console.error("Error in CourseService.getCourseVariantsByGroupId:", error);
+      throw new Error(ERROR_MESSAGES.DATABASE_ERROR);
+    }
+  }
+
   /**
    * Create new course
    */
@@ -193,7 +221,7 @@ class CourseService {
         hostel_fee: hostelFee,
         mess_fee: messFee,
         total_fee: totalFee,
-        course_group_id:500,
+        course_group_id: 500,
         offer_badge_text: courseData.show_offer_badge ? courseData.offer_badge_text : null,
         display_order: parseInt(courseData.display_order || 0),
         // Store relative path for thumbnail
@@ -431,34 +459,33 @@ class CourseService {
   /**
    * Reorder courses
    */
-async reorderCourses(coursesData, currentUserId) {
-  if (!Array.isArray(coursesData) || coursesData.length === 0) {
-    return {
-      success: false,
-      message: ERROR_MESSAGES.VALIDATION_ERROR,
-      errors: { courses: "Courses array is required" },
-    };
+  async reorderCourses(coursesData, currentUserId) {
+    if (!Array.isArray(coursesData) || coursesData.length === 0) {
+      return {
+        success: false,
+        message: ERROR_MESSAGES.VALIDATION_ERROR,
+        errors: { courses: "Courses array is required" },
+      };
+    }
+
+    try {
+      console.log("Reached in service");
+      await CourseRepository.updateDisplayOrders(coursesData, { currentUserId });
+
+      return {
+        success: true,
+        message: "Course order updated successfully",
+        data: null,
+      };
+    } catch (error) {
+      console.error("Error in CourseService.reorderCourses:", error.message);
+      return {
+        success: false,
+        message: error.message,
+        errors: null,
+      };
+    }
   }
-
-  try {
-    console.log("Reached in service")
-    await CourseRepository.updateDisplayOrders(coursesData, { currentUserId });
-
-    return {
-      success: true,
-      message: "Course order updated successfully",
-      data: null,
-    };
-  } catch (error) {
-    console.error("Error in CourseService.reorderCourses:", error.message);
-    return {
-      success: false,
-      message: error.message,
-      errors: null,
-    };
-  }
-}
-
 }
 
 export default new CourseService();

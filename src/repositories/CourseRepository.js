@@ -81,6 +81,12 @@ class CourseRepository {
     });
   }
 
+  async findByCourseGroupId(course_group_id) {
+  return await Course.findAll({
+    where: { course_group_id }
+  });
+}
+
   /**
    * Create new course
    */
