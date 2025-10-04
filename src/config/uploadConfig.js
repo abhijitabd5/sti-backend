@@ -204,6 +204,34 @@ export const uploadConfigs = {
       generateFileName("receipt", file.originalname),
   }),
 
+  //Transaction proof uploads
+  transactionProofs: createUploadConfig({
+    destinationPath: "uploads/transactions/proofs",
+    allowedFileTypes: "images_and_documents",
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxFiles: 1,
+    customFilename: (req, file) => 
+      generateFileName("proof", file.originalname),
+  }),
+  //Transaction Invoices uploads
+  transactionInvoices: createUploadConfig({
+    destinationPath: "uploads/transactions/invoices",
+    allowedFileTypes: "images_and_documents",
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxFiles: 1,
+    customFilename: (req, file) => 
+      generateFileName("invoice", file.originalname),
+  }),
+  //Transaction Receipts uploads
+  transactionReceipts: createUploadConfig({
+    destinationPath: "uploads/transactions/receipts",
+    allowedFileTypes: "images_and_documents",
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxFiles: 1,
+    customFilename: (req, file) => 
+      generateFileName("receipt", file.originalname),
+  }),
+
   // Invoice uploads
   invoices: createUploadConfig({
     destinationPath: "uploads/invoices",

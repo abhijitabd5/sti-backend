@@ -45,26 +45,57 @@ router.use("/transaction-categories", checkRoles("super_admin", "admin"));
 
 router.get("/transaction-categories", TransactionCategoryController.getAllCategories);
 router.get("/transaction-categories/stats", TransactionCategoryController.getCategoryStats);
-router.get("/transaction-categories/:id", TransactionCategoryController.getCategoryById);
-router.get("/transaction-categories/slug/:slug", TransactionCategoryController.getCategoryBySlug);
-router.get("/transaction-categories/:id/usage", TransactionCategoryController.checkCategoryUsage);
-router.post("/transaction-categories", TransactionCategoryController.createCategory);
-router.put("/transaction-categories/:id", TransactionCategoryController.updateCategory);
+router.get("/transaction-categories/view/:id", TransactionCategoryController.getCategoryById);
+router.get("/transaction-categories/view/slug/:slug", TransactionCategoryController.getCategoryBySlug);
+router.get("/transaction-categories/usage/:id", TransactionCategoryController.checkCategoryUsage);
+router.post("/transaction-categories/create", TransactionCategoryController.createCategory);
+router.put("/transaction-categories/edit/:id", TransactionCategoryController.updateCategory);
 router.put("/transaction-categories/reorder", TransactionCategoryController.reorderCategories);
-router.delete("/transaction-categories/:id", TransactionCategoryController.deleteCategory);
+router.delete("/transaction-categories/delete/:id", TransactionCategoryController.deleteCategory);
 
 // Transaction routes
 router.use("/transactions", checkRoles("super_admin", "admin"));
+
+const transactionUploadMiddleware = (req, res, next) => {
+  const attachmentType = req.body.attachment_type || "proof";
+  
+  let uploadConfig;
+  switch (attachmentType) {
+    case "invoice":
+      uploadConfig = uploadConfigs.transactionInvoices;
+      break;
+    case "receipt":
+      uploadConfig = uploadConfigs.transactionReceipts;
+      break;
+    case "proof":
+    case "other":
+    default:
+      uploadConfig = uploadConfigs.transactionProofs;
+      break;
+  }
+  
+  return uploadConfig.single("attachment")(req, res, next);
+};
+
+router.post(
+  "/transactions/create",
+  transactionUploadMiddleware,
+  TransactionController.createTransaction
+);
+
+router.put(
+  "/transactions/edit/:id",
+  transactionUploadMiddleware,
+  TransactionController.updateTransaction
+);
 
 router.get("/transactions", TransactionController.getAllTransactions);
 router.get("/transactions/dashboard/stats", TransactionController.getDashboardStats);
 router.get("/transactions/category/:categoryId", TransactionController.getTransactionsByCategory);
 router.get("/transactions/user/:userId", TransactionController.getTransactionsByUser);
-router.get("/transactions/category/:categoryId/total", TransactionController.getCategoryTransactionTotal);
-router.get("/transactions/:id", TransactionController.getTransactionById);
-router.post("/transactions", TransactionController.createTransaction);
-router.put("/transactions/:id", TransactionController.updateTransaction);
-router.delete("/transactions/:id", TransactionController.deleteTransaction);
+router.get("/transactions/category/total/:categoryId", TransactionController.getCategoryTransactionTotal);
+router.get("/transactions/view/:id", TransactionController.getTransactionById);
+router.delete("/transactions/delete/:id", TransactionController.deleteTransaction);
 
 // Enquiry Routes
 router.use("/enquiry", checkRoles("super_admin", "admin"));
