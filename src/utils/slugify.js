@@ -82,7 +82,7 @@ export const sanitizeFileName = (filename) => {
     .replace(/\.+$/, "") // Remove trailing dots
     .replace(/\s+/g, "_") // Replace spaces with underscores
     .replace(/[^\w\-_.]/g, "") // Keep only word characters, hyphens, underscores, and dots
-    .substring(0, 255); // Limit length to 255 characters
+    .substring(0, 100); // Limit length to 100 characters
 };
 
 export const generateFileName = (type, originalFilename) => {
@@ -110,7 +110,7 @@ export const generateCertificateNumber = (studentId, courseCode) => {
   const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
   const timestamp = Date.now().toString().slice(-6);
 
-  return `EMA-CERT-${year}${month}-${courseCode}-${studentId}-${timestamp}`;
+  return `STI-${year}${month}-${courseCode}-${studentId}-${timestamp}`;
 };
 
 export default {

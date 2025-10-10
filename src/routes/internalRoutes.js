@@ -5,11 +5,11 @@ import CourseController from "../controllers/internal/CourseController.js";
 import TransactionCategoryController from "../controllers/internal/TransactionCategoryController.js";
 import TransactionController from "../controllers/internal/TransactionController.js";
 import EnquiryController from "../controllers/internal/enquiryController.js";
-import WebsiteEnquiryController from "../controllers/website/webEnquiryController.js";
 import StudentController from "../controllers/internal/StudentController.js";
 import PageController from "../controllers/internal/PageController.js";
 import PageContentController from "../controllers/internal/PageContentController.js";
 import GalleryController from "../controllers/internal/GalleryController.js";
+import ReviewController from '../controllers/internal/ReviewController.js';
 import { uploadConfigs } from "../config/uploadConfig.js";
 
 const router = express.Router();
@@ -147,9 +147,6 @@ const galleryUpload = uploadConfigs.galleryMedia.fields([
   { name: "thumbnail", maxCount: 1 }, // Thumbnail for videos
 ]);
 
-// Alternative: If you want to accept any field name dynamically
-// const galleryUpload = uploadConfigs.galleryMedia.any();
-
 router.post(
   "/gallery",
   galleryUpload, // This is the key - specify expected fields
@@ -198,5 +195,21 @@ router.get("/page-contents/:id", PageContentController.getContentById);
 router.put("/page-contents/:id", PageContentController.updateContent);
 router.delete("/page-contents/:id", PageContentController.deleteContent);
 router.post("/page-contents/:id/duplicate", PageContentController.duplicateContent);
+
+//Review Routes
+
+router.use('/review', checkRoles('super_admin', 'admin', 'employee', 'marketing', 'seo'));
+
+router.get('/review/statistics', ReviewController.getStatistics);
+
+router.post('/review/reorder', ReviewController.reorderReviews);
+
+router.patch('/review/approval-status/:id', ReviewController.changeApprovalStatus);
+
+router.post('/review/create', ReviewController.createReview);
+router.get('/review', ReviewController.getAllReviews);
+router.get('/review/view/:id', ReviewController.getReviewById);
+router.put('/review/edit/:id', ReviewController.updateReview);
+router.delete('/review/delete/:id', ReviewController.deleteReview);
 
 export default router;

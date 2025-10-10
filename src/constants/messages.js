@@ -140,6 +140,48 @@ export const ERROR_MESSAGES = {
   CATEGORY_HAS_TRANSACTIONS:
     "Cannot delete category. It has associated transactions. Please reassign or delete the transactions first.",
 };
+export const REVIEW_SUCCESS_MESSAGES = {
+  REVIEW_CREATED: 'Review created successfully',
+  REVIEW_UPDATED: 'Review updated successfully',
+  REVIEW_DELETED: 'Review deleted successfully',
+  REVIEW_RETRIEVED: 'Review retrieved successfully',
+  REVIEWS_RETRIEVED: 'Reviews retrieved successfully',
+  REVIEWS_REORDERED: 'Reviews reordered successfully',
+  REVIEW_APPROVED: 'Review approved successfully',
+  REVIEW_DISAPPROVED: 'Review disapproved successfully',
+  STATISTICS_RETRIEVED: 'Statistics retrieved successfully'
+};
+
+// Error Messages (add to ERROR_MESSAGES object)
+export const REVIEW_ERROR_MESSAGES = {
+  REVIEW_NOT_FOUND: 'Review not found',
+  REVIEW_ALREADY_EXISTS: 'Review already exists',
+  INVALID_RATING: 'Rating must be between 1 and 5',
+  INVALID_DISPLAY_ORDER: 'Display order can only be set for approved reviews',
+  REVIEW_NOT_APPROVED: 'Only approved reviews can be reordered',
+  INVALID_REVIEW_DATA: 'Invalid review data provided',
+  REVIEW_CREATE_FAILED: 'Failed to create review',
+  REVIEW_UPDATE_FAILED: 'Failed to update review',
+  REVIEW_DELETE_FAILED: 'Failed to delete review'
+};
+
+// Validation Messages
+export const REVIEW_VALIDATION_MESSAGES = {
+  NAME_REQUIRED: 'Name is required',
+  NAME_MIN_LENGTH: 'Name must be at least 2 characters',
+  NAME_MAX_LENGTH: 'Name cannot exceed 100 characters',
+  REVIEW_TEXT_REQUIRED: 'Review text is required',
+  REVIEW_TEXT_MIN_LENGTH: 'Review text must be at least 10 characters',
+  REVIEW_TEXT_MAX_LENGTH: 'Review text cannot exceed 1000 characters',
+  RATING_REQUIRED: 'Rating is required',
+  RATING_INVALID: 'Rating must be between 1 and 5',
+  PHONE_INVALID: 'Phone number format is invalid',
+  APPROVAL_STATUS_REQUIRED: 'Approval status (is_approved) is required',
+  REVIEWS_ARRAY_REQUIRED: 'Reviews array is required and must not be empty',
+  REVIEW_ID_REQUIRED: 'Review ID is required',
+  DISPLAY_ORDER_REQUIRED: 'Display order is required'
+};
+
 export const STATUS_CODES = {
   OK: 200,
   CREATED: 201,
@@ -157,4 +199,7 @@ export default {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
   STATUS_CODES,
+  REVIEW_SUCCESS_MESSAGES,
+  REVIEW_ERROR_MESSAGES,
+  REVIEW_VALIDATION_MESSAGES,
 };

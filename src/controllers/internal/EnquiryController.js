@@ -25,22 +25,7 @@ class EnquiryController {
     }
   }
 
-  /**
-   * Get all enquiries with filtering and pagination
-   * @route GET /api/internal/enquiries
-   * @access Private (Admin, Marketing, Employee)
-   * @query {string} status - Filter by status
-   * @query {string} source - Filter by source
-   * @query {string} search - Search term
-   * @query {boolean} is_action_taken - Filter by action taken
-   * @query {string} action_type - Filter by action type
-   * @query {string} startDate - Start date filter
-   * @query {string} endDate - End date filter
-   * @query {number} page - Page number
-   * @query {number} limit - Items per page
-   * @query {string} sortBy - Sort by field
-   * @query {string} sortOrder - Sort order (ASC/DESC)
-   */
+
   static async getAllEnquiries(req, res) {
     try {
       const {
@@ -53,7 +38,7 @@ class EnquiryController {
         endDate,
         page = 1,
         limit = 10,
-        sortBy = "created_at",
+        sortBy = "createdAt",
         sortOrder = "DESC",
       } = req.query;
 
@@ -445,16 +430,6 @@ class EnquiryController {
     }
   }
 
-  /**
-   * Export enquiries data
-   * @route GET /api/internal/enquiries/export
-   * @access Private (Admin, Marketing)
-   * @query {string} format - Export format (json/csv)
-   * @query {string} status - Filter by status
-   * @query {string} source - Filter by source
-   * @query {string} startDate - Start date filter
-   * @query {string} endDate - End date filter
-   */
   static async exportEnquiries(req, res) {
     try {
       const { format = "json", status, source, startDate, endDate } = req.query;
@@ -467,7 +442,7 @@ class EnquiryController {
 
       // Get all enquiries without pagination for export
       const pagination = { page: 1, limit: 10000 }; // Large limit for export
-      const sorting = { sortBy: "created_at", sortOrder: "DESC" };
+      const sorting = { sortBy: "createdAt", sortOrder: "DESC" };
 
       const result = await EnquiryService.getAllEnquiries(
         filters,
@@ -500,7 +475,7 @@ class EnquiryController {
               enquiry.is_action_taken,
               enquiry.action_type || "",
               `"${(enquiry.remark || "").replace(/"/g, '""')}"`,
-              enquiry.created_at,
+              enquiry.createdAt,
             ].join(",");
           })
           .join("\n");

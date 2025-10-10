@@ -49,6 +49,21 @@ class WebsiteCourseController {
    * @route GET /courses/:slug
    * @access Public
    */
+  static async getPublicCourseById(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await CourseService.getCourseById(id);
+
+      if (!result.success) {
+        return errorResponse(res, result.message, STATUS_CODES.NOT_FOUND);
+      }
+
+      return successResponse(res, result.data, result.message);
+    } catch (error) {
+      console.error('Error in WebsiteCourseController.getPublicCourseById:', error);
+      return errorResponse(res, error.message, STATUS_CODES.INTERNAL_SERVER_ERROR);
+    }
+  }
   static async getPublicCourseBySlug(req, res) {
     try {
       const { slug } = req.params;

@@ -1,11 +1,11 @@
 // src/models/review.js
 
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes } from "sequelize";
 
 export default (sequelize) => {
   class StudentReview extends Model {
     static associate(models) {
-      StudentReview.belongsTo(models.Student, { foreignKey: 'student_id' });
+      StudentReview.belongsTo(models.Student, { foreignKey: "student_id" });
     }
   }
 
@@ -22,24 +22,37 @@ export default (sequelize) => {
       created_by: { type: DataTypes.INTEGER, allowNull: false },
       updated_by: { type: DataTypes.JSON },
       is_deleted: { type: DataTypes.BOOLEAN, defaultValue: false },
-      deleted_by: { type: DataTypes.INTEGER }
+      deleted_by: { type: DataTypes.INTEGER },
     },
     {
       sequelize,
-      modelName: 'Review',
-      tableName: 'reviews',
+      modelName: "Review",
+      tableName: "reviews",
       paranoid: true,
       timestamps: true,
       hooks: {
-        beforeUpdate: (record, options) => {
-          if (!record.updated_by) record.updated_by = [];
-          record.updated_by.push({ id: options?.userId, timestamp: new Date().toISOString() });
+        beforeCreate: (instance, options) => {
+          if (options?.currentUserId) {
+            instance.created_by = options.currentUserId;
+          }
         },
-        beforeDestroy: (record, options) => {
-          record.is_deleted = true;
-          record.deleted_by = options?.userId;
-        }
-      }
+        beforeUpdate: (instance, options) => {
+          if (options.currentUserId) {
+            const history = instance.updated_by || [];
+            history.push({
+              id: options?.currentUserId,
+              timestamp: new Date().toISOString(),
+            });
+            instance.updated_by = history;
+          }
+        },
+        beforeDestroy: (instance, options) => {
+          if (options.currentUserId) {
+            instance.is_deleted = true;
+            instance.deleted_by = options.currentUserId;
+          }
+        },
+      },
     }
   );
 
