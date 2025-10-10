@@ -8,7 +8,7 @@ import EnquiryController from "../controllers/internal/EnquiryController.js";
 import StudentController from "../controllers/internal/StudentController.js";
 import PageController from "../controllers/internal/PageController.js";
 import PageContentController from "../controllers/internal/PageContentController.js";
-import GalleryController from "../controllers/internal/GalleryController.js";
+// import GalleryController from "../controllers/internal/GalleryController.js";
 import ReviewController from '../controllers/internal/ReviewController.js';
 import { uploadConfigs } from "../config/uploadConfig.js";
 
@@ -147,22 +147,22 @@ const galleryUpload = uploadConfigs.galleryMedia.fields([
   { name: "thumbnail", maxCount: 1 }, // Thumbnail for videos
 ]);
 
-router.post(
-  "/gallery",
-  galleryUpload, // This is the key - specify expected fields
-  GalleryController.createGalleryItem
-);
+// router.post(
+//   "/gallery",
+//   galleryUpload, // This is the key - specify expected fields
+//   GalleryController.createGalleryItem
+// );
 
 // router.post('/gallery/', uploadConfigs.galleryMedia.single('file'), GalleryController.createGalleryItem);
-router.post("/gallery/bulk", uploadConfigs.galleryMedia.array("files", 20), GalleryController.bulkUploadGalleryItems);
-router.put("/gallery/:id", uploadConfigs.galleryMedia.single("file"), GalleryController.updateGalleryItem);
+// router.post("/gallery/bulk", uploadConfigs.galleryMedia.array("files", 20), GalleryController.bulkUploadGalleryItems);
+// router.put("/gallery/:id", uploadConfigs.galleryMedia.single("file"), GalleryController.updateGalleryItem);
 
-router.get("/gallery/", GalleryController.getAllGalleryItems);
-router.get("/gallery/stats", GalleryController.getGalleryStats);
-router.get("/gallery/:id", GalleryController.getGalleryItemById);
-router.delete("/gallery/:id", GalleryController.deleteGalleryItem);
-router.patch("/gallery/:id/status", GalleryController.updateGalleryItemStatus);
-router.patch("/gallery/reorder", GalleryController.reorderGalleryItems);
+// router.get("/gallery/", GalleryController.getAllGalleryItems);
+// router.get("/gallery/stats", GalleryController.getGalleryStats);
+// router.get("/gallery/:id", GalleryController.getGalleryItemById);
+// router.delete("/gallery/:id", GalleryController.deleteGalleryItem);
+// router.patch("/gallery/:id/status", GalleryController.updateGalleryItemStatus);
+// router.patch("/gallery/reorder", GalleryController.reorderGalleryItems);
 
 router.use("/pages", checkRoles("super_admin", "admin", "seo"));
 
