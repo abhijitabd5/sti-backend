@@ -1,4 +1,4 @@
-// src/controllers/internal/galleryController.js
+// src/controllers/internal/GalleryController.js
 import GalleryService from '../../services/GalleryService.js';
 import { 
   successResponse, 
