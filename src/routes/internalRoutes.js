@@ -4,7 +4,7 @@ import { checkRoles } from "../middlewares/roleMiddleware.js";
 import CourseController from "../controllers/internal/CourseController.js";
 import TransactionCategoryController from "../controllers/internal/TransactionCategoryController.js";
 import TransactionController from "../controllers/internal/TransactionController.js";
-import EnquiryController from "../controllers/internal/enquiryController.js";
+import EnquiryController from "../controllers/internal/EnquiryController.js";
 import StudentController from "../controllers/internal/StudentController.js";
 import PageController from "../controllers/internal/PageController.js";
 import PageContentController from "../controllers/internal/PageContentController.js";
