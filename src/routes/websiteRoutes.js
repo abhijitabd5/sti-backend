@@ -1,6 +1,6 @@
 import express from 'express';
 import WebsiteCourseController from '../controllers/website/webCourseController.js';
-import WebsiteEnquiryController from '../controllers/website/webEnquiryController.js';
+import WebsiteEnquiryController from '../controllers/website/WebEnquiryController.js';
 import WebReviewController from '../controllers/website/WebReviewController.js';
 
 const router = express.Router();
